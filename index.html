@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AdHive - Channel Verification</title>
+  <style>
+    body {
+      background-color: #09090b;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .card {
+      border-radius: 0.75rem;
+      border: 1px solid #27272a;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 24rem;
+      background-color: #18181b;
+    }
+    .card-header {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+    .card-title {
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      text-align: center;
+      color: #60a5fa;
+      font-size: 1.25rem;
+      margin: 0;
+    }
+    .user-info {
+      font-size: 0.875rem;
+      color: #a1a1aa;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .card-content {
+      padding: 1.5rem;
+      padding-top: 0;
+    }
+    .channel-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background-color: #27272a;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .channel-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .channel-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #ef4444;
+    }
+    .channel-status.joined {
+      background-color: #22c55e;
+    }
+    .join-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+      font-weight: 500;
+      transition: all 0.2s;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      height: 2rem;
+      border-radius: 0.375rem;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .join-btn:hover {
+      background-color: #1d4ed8;
+    }
+    .verify-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      height: 2.5rem;
+      padding: 0 1rem;
+      width: 100%;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .verify-btn:hover {
+      background-color: #1d4ed8;
+    }
+    .verify-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .verify-btn.success {
+      background-color: #22c55e;
+    }
+    .verify-btn.success:hover {
+      background-color: #16a34a;
+    }
+    .instructions {
+      font-size: 0.875rem;
+      color: #a1a1aa;
+      margin-top: 1rem;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    .status-message {
+      font-size: 0.875rem;
+      text-align: center;
+      margin-top: 0.5rem;
+      min-height: 1.25rem;
+    }
+    .status-success {
+      color: #22c55e;
+    }
+    .status-error {
+      color: #ef4444;
+    }
+    .status-info {
+      color: #60a5fa;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="card-title">Join Our Channels</h1>
+        <div id="user-info" class="user-info">
+          Welcome! Please join our channels to continue.
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="channel-list">
+          <div class="channel-item">
+            <div class="channel-info">
+              <div class="channel-status" id="status-channel1"></div>
+              <span>Channel 1</span>
+            </div>
+            <a href="https://t.me/echoearn" class="join-btn" target="_blank">Join</a>
+          </div>
+          <div class="channel-item">
+            <div class="channel-info">
+              <div class="channel-status" id="status-channel2"></div>
+              <span>Channel 2</span>
+            </div>
+            <a href="https://t.me/ALL1N_0NE" class="join-btn" target="_blank">Join</a>
+          </div>
+        </div>
+        
+        <button id="verify-button" class="verify-btn">Verify Membership</button>
+        
+        <div id="status-message" class="status-message"></div>
+        
+        <div class="instructions">
+          <p>1. Click "Join" to open each channel</p>
+          <p>2. Join the channel in Telegram</p>
+          <p>3. Return here and click "Verify Membership"</p>
+          <p>4. You will be automatically redirected once verified</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      let tg = window.Telegram.WebApp;
+      let user = null;
+      let isChecking = false;
+      
+      // Initialize Telegram Web App
+      tg.expand();
+      tg.enableClosingConfirmation();
+      
+      // Get user data from Telegram
+      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        user = tg.initDataUnsafe.user;
+        updateUserInfo();
+        
+        // Store user data for the home page (temporary until we update home.html)
+        localStorage.setItem('telegramUser', JSON.stringify(user));
+      } else {
+        // Not in Telegram Mini App context
+        showStatus('This app must be opened within Telegram', 'error');
+        return;
+      }
+      
+      // Channel IDs for verification
+      const channelIds = ['-1002586398527', '-1002858278191'];
+      const channelMap = {
+        '-1002586398527': { name: 'Channel 1', element: 'status-channel1' },
+        '-1002858278191': { name: 'Channel 2', element: 'status-channel2' }
+      };
+      
+      // Update UI with user info
+      function updateUserInfo() {
+        const userInfoEl = document.getElementById('user-info');
+        if (user && userInfoEl) {
+          const displayName = `${user.first_name} ${user.last_name || ''}`.trim();
+          userInfoEl.textContent = `Welcome, ${displayName}! Please join our channels to continue.`;
+        }
+      }
+      
+      // Show status message
+      function showStatus(message, type = 'info') {
+        const statusEl = document.getElementById('status-message');
+        if (statusEl) {
+          statusEl.textContent = message;
+          statusEl.className = `status-message status-${type}`;
+        }
+      }
+      
+      // Update channel status indicators
+      function updateChannelStatuses(membershipData) {
+        Object.entries(membershipData).forEach(([channelId, isMember]) => {
+          const channel = channelMap[channelId];
+          if (channel) {
+            const statusEl = document.getElementById(channel.element);
+            if (statusEl) {
+              statusEl.className = `channel-status ${isMember ? 'joined' : ''}`;
+            }
+          }
+        });
+      }
+
+      // Check user verification status from backend
+      async function checkUserVerification() {
+        try {
+          const response = await fetch(`/api/telegram/verify-user?userId=${user.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            return data.verified || false;
+          }
+          return false;
+        } catch (error) {
+          console.error('Error checking user verification:', error);
+          return false;
+        }
+      }
+      
+      // Check membership function with retry logic
+      async function checkMembershipWithRetry(maxRetries = 3, delay = 1000) {
+        let retries = 0;
+        
+        while (retries < maxRetries) {
+          try {
+            const apiUrl = `/api/telegram/check-membership?userId=${user.id}&channelIds=${encodeURIComponent(JSON.stringify(channelIds))}`;
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            const response = await fetch(apiUrl, {
+              signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+              const data = await response.json();
+              return data;
+            } else {
+              throw new Error(`HTTP ${response.status}`);
+            }
+          } catch (error) {
+            retries++;
+            if (retries >= maxRetries) {
+              throw error;
+            }
+            await new Promise(resolve => setTimeout(resolve, delay * retries));
+          }
+        }
+      }
+      
+      // Handle verify button click
+      document.getElementById('verify-button').addEventListener('click', async function() {
+        if (isChecking) return;
+        
+        const verifyBtn = this;
+        const originalText = verifyBtn.textContent;
+        
+        // Show loading state
+        verifyBtn.innerHTML = '<span class="loading"></span> Checking...';
+        verifyBtn.disabled = true;
+        isChecking = true;
+        showStatus('Checking your membership status...', 'info');
+        
+        try {
+          // Check if user has joined all channels
+          console.log('Checking membership for channels:', channelIds);
+          
+          const data = await checkMembershipWithRetry();
+          console.log('Membership response:', data);
+          
+          if (data && data.membership) {
+            // Update channel status indicators
+            updateChannelStatuses(data.membership);
+            
+            const allJoined = data.allJoined;
+            
+            if (allJoined) {
+              // Store verification status in localStorage (temporary cache)
+              localStorage.setItem('verified_' + user.id, 'true');
+              localStorage.setItem('verification_time', Date.now().toString());
+              
+              // Update button to show success
+              verifyBtn.className = 'verify-btn success';
+              verifyBtn.innerHTML = '✅ Verified!';
+              showStatus('Success! Redirecting to app...', 'success');
+              
+              // Notify server without closing the app
+              try {
+                await fetch('/api/telegram/notify-joined', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    userId: user.id,
+                    action: 'channels_joined'
+                  })
+                });
+              } catch (notifyError) {
+                console.error('Notification error:', notifyError);
+              }
+              
+              // Redirect to home page after a short delay
+              setTimeout(() => {
+                window.location.href = 'home.html';
+              }, 1500);
+            } else {
+              // Some channels not joined
+              const notJoinedChannels = Object.entries(data.membership)
+                .filter(([channelId, status]) => !status)
+                .map(([channelId]) => channelMap[channelId]?.name || channelId);
+              
+              showStatus(`Please join: ${notJoinedChannels.join(', ')}`, 'error');
+              verifyBtn.textContent = 'Try Again';
+            }
+          } else {
+            throw new Error('Invalid response format from server');
+          }
+        } catch (error) {
+          console.error('Verification error:', error);
+          showStatus('Failed to verify. Please try again.', 'error');
+          verifyBtn.textContent = 'Retry Verification';
+        } finally {
+          // Restore button state
+          verifyBtn.disabled = false;
+          isChecking = false;
+        }
+      });
+      
+      // Initial check when page loads
+      async function initialCheck() {
+        try {
+          // Check if we already verified this user recently (within 5 minutes)
+          const verificationTime = localStorage.getItem('verification_time');
+          if (verificationTime && (Date.now() - parseInt(verificationTime)) < 5 * 60 * 1000) {
+            if (localStorage.getItem('verified_' + user.id) === 'true') {
+              // Double-check with backend to ensure user is still verified
+              const backendVerified = await checkUserVerification();
+              if (backendVerified) {
+                window.location.href = 'home.html';
+                return;
+              } else {
+                // Backend says not verified, clear local cache
+                localStorage.removeItem('verified_' + user.id);
+                localStorage.removeItem('verification_time');
+              }
+            }
+          }
+          
+          console.log('Initial check for channels:', channelIds);
+          showStatus('Checking your current status...', 'info');
+          
+          const data = await checkMembershipWithRetry(2, 500);
+          
+          if (data && data.membership) {
+            updateChannelStatuses(data.membership);
+            
+            if (data.allJoined) {
+              // Store verification status in localStorage (temporary cache)
+              localStorage.setItem('verified_' + user.id, 'true');
+              localStorage.setItem('verification_time', Date.now().toString());
+              
+              showStatus('Already verified! Redirecting...', 'success');
+              setTimeout(() => {
+                window.location.href = 'home.html';
+              }, 1000);
+            } else {
+              showStatus('Please join all channels to continue', 'info');
+            }
+          }
+        } catch (error) {
+          console.error('Initial check error:', error);
+          showStatus('Unable to check status. Please verify manually.', 'error');
+        }
+      }
+
+      // Periodic check function (runs every 30 minutes)
+      function setupPeriodicCheck() {
+        setInterval(async () => {
+          if (window.location.pathname.endsWith('home.html')) {
+            try {
+              const data = await checkMembershipWithRetry(1, 500);
+              if (data && data.membership) {
+                const allJoined = data.allJoined;
+                if (!allJoined) {
+                  // User left some channels - remove verification status
+                  localStorage.removeItem('verified_' + user.id);
+                  localStorage.removeItem('verification_time');
+                  console.log('User left some channels, verification status removed');
+                  
+                  // Redirect back to verification
+                  window.location.href = 'index.html';
+                }
+              }
+            } catch (error) {
+              console.error('Periodic check error:', error);
+            }
+          }
+        }, 30 * 60 * 1000); // 30 minutes
+      }
+      
+      // Run initial check
+      initialCheck();
+
+      // Set up periodic checking
+      setupPeriodicCheck();
+    });
+  </script>
+</body>
+</html>
