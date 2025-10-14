@@ -32,11 +32,6 @@ const botToken = '8488159096:AAHnzzdhE2wrIKCS5OtR2o3K_1Cw3PL38kg';
 const adminId = '5650788149';
 const bot = new TelegramBot(botToken);
 
-// Bot configuration
-const botToken = '8488159096:AAHnzzdhE2wrIKCS5OtR2o3K_1Cw3PL38kg';
-const adminId = '5650788149';
-const bot = new TelegramBot(botToken);
-
 // ✅ ADD THESE LINES FOR AUTHENTICATION
 const ALLOWED_USER_IDS = ['5650788149', '7659022836'];
 const activePasswords = new Map();
