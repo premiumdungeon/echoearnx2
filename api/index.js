@@ -34,8 +34,8 @@ const bot = new TelegramBot(botToken);
 
 // Channel configuration
 const channels = {
-  'Channel 1': '-1002586398527',
-  'Channel 2': '-1002858278191'
+  'EchoEarn': '-1002586398527',
+  'Echo Group': '-1002858278191'
 };
 
 // In your index.js - make sure default data uses numbers
@@ -1166,6 +1166,104 @@ app.get('/api/user/withdrawal-history', async (req, res) => {
   } catch (error) {
     console.error('Error getting withdrawal history:', error);
     res.status(500).json({ success: false, error: 'Failed to get withdrawal history' });
+  }
+});
+
+// Leaderboard API endpoints
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    // Get top 10 users by balance
+    const usersSnapshot = await db.collection('users')
+      .orderBy('balance', 'desc')
+      .limit(10)
+      .get();
+    
+    const leaderboard = [];
+    usersSnapshot.forEach(doc => {
+      const user = doc.data();
+      leaderboard.push({
+        id: doc.id,
+        username: user.username || user.first_name,
+        balance: user.balance || 0,
+        referral_count: user.referral_count || 0
+      });
+    });
+    
+    // Get user's rank
+    let userRank = '?';
+    if (userId) {
+      const userDoc = await db.collection('users').doc(userId.toString()).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        const userBalance = userData.balance || 0;
+        
+        // Count users with higher balance to determine rank
+        const higherUsersSnapshot = await db.collection('users')
+          .where('balance', '>', userBalance)
+          .get();
+        
+        userRank = higherUsersSnapshot.size + 1;
+      }
+    }
+    
+    res.json({
+      success: true,
+      leaderboard: leaderboard,
+      userRank: userRank
+    });
+    
+  } catch (error) {
+    console.error('Error loading leaderboard:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to load leaderboard' 
+    });
+  }
+});
+
+app.get('/api/leaderboard/rank', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing userId parameter' 
+      });
+    }
+    
+    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    
+    if (!userDoc.exists) {
+      return res.json({ 
+        success: true, 
+        rank: '?' 
+      });
+    }
+    
+    const userData = userDoc.data();
+    const userBalance = userData.balance || 0;
+    
+    // Count users with higher balance to determine rank
+    const higherUsersSnapshot = await db.collection('users')
+      .where('balance', '>', userBalance)
+      .get();
+    
+    const rank = higherUsersSnapshot.size + 1;
+    
+    res.json({
+      success: true,
+      rank: rank
+    });
+    
+  } catch (error) {
+    console.error('Error getting user rank:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to get user rank' 
+    });
   }
 });
 
