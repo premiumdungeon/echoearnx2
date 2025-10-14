@@ -2297,6 +2297,7 @@ video {
 }
 
 // Update referral link display
+// Update referral link display - MODIFIED FOR DIV
 function updateReferralLink() {
   const botUsername = 'EchoEARN_robot';
   const userData = localStorage.getItem('telegramUser');
@@ -2305,44 +2306,55 @@ function updateReferralLink() {
     try {
       const user = JSON.parse(userData);
       const referralLink = `https://t.me/${botUsername}?start=${user.id}`;
-      document.getElementById('referral-link').value = referralLink;
+      document.getElementById('referral-link').textContent = referralLink;
     } catch (error) {
       console.error('Error generating referral link:', error);
     }
   }
 }
 
-// Copy referral link to clipboard - FIXED VERSION
+// Copy referral link to clipboard - MODIFIED FOR DIV
 function copyReferralLink() {
-  const referralLinkInput = document.getElementById('referral-link');
+  const referralLinkElement = document.getElementById('referral-link');
+  const referralLink = referralLinkElement.textContent;
   
   // Modern clipboard API approach
   if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(referralLinkInput.value).then(() => {
+    navigator.clipboard.writeText(referralLink).then(() => {
       showToast('Referral link copied to clipboard!', 'success');
     }).catch(err => {
       // Fallback to old method if modern API fails
-      fallbackCopy(referralLinkInput);
+      fallbackCopy(referralLink);
     });
   } else {
     // Use fallback for older browsers
-    fallbackCopy(referralLinkInput);
+    fallbackCopy(referralLink);
   }
 }
 
-// Fallback copy method
-function fallbackCopy(inputElement) {
-  inputElement.select();
-  inputElement.setSelectionRange(0, 99999); // For mobile devices
+// Fallback copy method - MODIFIED FOR DIV
+function fallbackCopy(text) {
+  // Create a temporary textarea element
+  const tempTextArea = document.createElement('textarea');
+  tempTextArea.value = text;
+  tempTextArea.style.position = 'fixed';
+  tempTextArea.style.left = '-999999px';
+  tempTextArea.style.top = '-999999px';
+  document.body.appendChild(tempTextArea);
+  tempTextArea.focus();
+  tempTextArea.select();
   
   try {
     const successful = document.execCommand('copy');
+    document.body.removeChild(tempTextArea);
+    
     if (successful) {
       showToast('Referral link copied to clipboard!', 'success');
     } else {
       showToast('Failed to copy referral link', 'error');
     }
   } catch (err) {
+    document.body.removeChild(tempTextArea);
     console.error('Fallback copy failed: ', err);
     showToast('Failed to copy referral link', 'error');
   }
