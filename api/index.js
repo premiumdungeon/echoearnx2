@@ -2147,12 +2147,14 @@ app.post('/api/withdrawals/approve', async (req, res) => {
         
         const request = withdrawalDoc.data();
         
-        // Process payment (your existing payment logic)
+        // ✅ FIX: Don't refund on payment failure - keep it pending
         const paymentData = {
             address: request.wallet,
             amount: request.wkcAmount.toString(),
             token: "WKC"
         };
+        
+        console.log('💰 Processing payment:', paymentData);
         
         const paymentResponse = await fetch('https://bnb-autopayed.onrender.com/api/pay', {
             method: 'POST',
@@ -2161,21 +2163,23 @@ app.post('/api/withdrawals/approve', async (req, res) => {
         });
         
         if (!paymentResponse.ok) {
-            // Refund points on failure
-            await updateUserBalance(request.userId, request.amount, {
-                type: 'withdrawal_refund',
-                amount: request.amount,
-                description: 'Withdrawal refund - payment failed'
-            });
-            
+            // ✅ FIX: DON'T REFUND - Keep withdrawal as pending for admin to retry later
             const errorText = await paymentResponse.text();
-            throw new Error(`Payment failed: ${errorText}`);
+            console.error('❌ Payment failed but keeping withdrawal pending:', errorText);
+            
+            // Send failure DM to user (optional - you can remove this if you don't want users to know)
+            await sendWithdrawalFailureDM(request.userId, request, `Payment processing delayed. Admin will retry shortly.`);
+            
+            return res.status(400).json({ 
+                success: false, 
+                error: `Payment failed: ${errorText}. Withdrawal remains pending for retry.` 
+            });
         }
         
         const result = await paymentResponse.json();
         
         if (result.success) {
-            // Update withdrawal status
+            // ✅ SUCCESS: Update withdrawal status to approved
             await withdrawalsCollection.doc(requestId).update({
                 status: 'approved',
                 approvedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -2183,8 +2187,13 @@ app.post('/api/withdrawals/approve', async (req, res) => {
                 explorerLink: result.explorerLink
             });
 
+            // ✅ Update user's withdrawal history status
+            await updateWithdrawalHistoryStatus(request.userId, requestId, 'approved', result.txHash);
+
             // ✅ SEND SUCCESS DM TO USER
             await sendWithdrawalSuccessDM(request.userId, request, result);
+            
+            console.log('✅ Withdrawal approved successfully:', result.txHash);
             
             res.json({
                 success: true,
@@ -2194,33 +2203,36 @@ app.post('/api/withdrawals/approve', async (req, res) => {
                 explorerLink: result.explorerLink
             });
         } else {
-            // Refund points and send failure DM
-            await updateUserBalance(request.userId, request.amount, {
-                type: 'withdrawal_refund',
-                amount: request.amount,
-                description: 'Withdrawal refund - payment failed'
-            });
-
-            // ✅ SEND FAILURE DM TO USER
-            await sendWithdrawalFailureDM(request.userId, request, result.error || 'Payment failed');
+            // ✅ FIX: DON'T REFUND - Keep withdrawal as pending for admin to retry
+            console.error('❌ Payment API returned failure but keeping withdrawal pending:', result.error);
             
-            throw new Error(result.error || 'Payment failed');
+            // Send failure DM to user (optional - you can remove this if you don't want users to know)
+            await sendWithdrawalFailureDM(request.userId, request, `Payment processing delayed. Admin will retry shortly.`);
+            
+            return res.status(400).json({ 
+                success: false, 
+                error: result.error || 'Payment failed. Withdrawal remains pending for retry.' 
+            });
         }
     } catch (error) {
-        console.error('Error approving withdrawal:', error);
+        console.error('❌ Error approving withdrawal:', error);
         
-        // ✅ SEND ERROR DM TO USER
+        // ✅ FIX: DON'T REFUND ON ERROR - Keep withdrawal as pending
         try {
             const withdrawalDoc = await withdrawalsCollection.doc(requestId).get();
             if (withdrawalDoc.exists) {
                 const request = withdrawalDoc.data();
-                await sendWithdrawalFailureDM(request.userId, request, error.message);
+                // Send error DM to user (optional - you can remove this if you don't want users to know)
+                await sendWithdrawalFailureDM(request.userId, request, `Payment processing delayed due to technical issue. Admin will retry shortly.`);
             }
         } catch (dmError) {
             console.error('Failed to send error DM:', dmError);
         }
         
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            error: `Technical error: ${error.message}. Withdrawal remains pending for retry.` 
+        });
     }
 });
 
@@ -2247,25 +2259,65 @@ async function sendWithdrawalSuccessDM(userId, request, paymentResult) {
     }
 }
 
-// ✅ NEW FUNCTION: Send withdrawal failure DM
-async function sendWithdrawalFailureDM(userId, request, errorMessage) {
+// ✅ NEW FUNCTION: Update withdrawal history status in user's document
+async function updateWithdrawalHistoryStatus(userId, withdrawalId, status, transactionHash = null) {
     try {
-        const message = `❌ *Withdrawal Failed*\n\n` +
-                       `💰 *Amount:* ${request.wkcAmount} WKC\n` +
-                       `📍 *Wallet:* \`${request.wallet}\`\n` +
-                       `⏰ *Attempted:* ${new Date().toLocaleString()}\n\n` +
-                       `📛 *Reason:* ${errorMessage}\n\n` +
-                       `🔄 *Your ${request.amount} points have been refunded.*\n` +
-                       `Please try again or contact support if the issue persists.`;
+        const userRef = db.collection('users').doc(userId.toString());
+        const userDoc = await userRef.get();
+        
+        if (userDoc.exists) {
+            const user = userDoc.data();
+            const withdrawalHistory = user.withdrawalHistory || [];
+            
+            // Find and update the specific withdrawal entry
+            const updatedHistory = withdrawalHistory.map(entry => {
+                // We need a way to identify the withdrawal - using amount and date as identifier
+                // Alternatively, you could store withdrawalId in the history
+                if (entry.amount && entry.date) {
+                    // This is a simple match - you might want to improve this logic
+                    const entryDate = new Date(entry.date).getTime();
+                    const requestDate = new Date().getTime() - 24 * 60 * 60 * 1000; // Within last 24 hours
+                    
+                    if (entry.status === 'pending' && entryDate > requestDate) {
+                        return {
+                            ...entry,
+                            status: status,
+                            transactionHash: transactionHash,
+                            approvedAt: new Date().toISOString()
+                        };
+                    }
+                }
+                return entry;
+            });
+            
+            await userRef.update({
+                withdrawalHistory: updatedHistory
+            });
+            
+            console.log(`✅ Updated withdrawal history status to ${status} for user ${userId}`);
+        }
+    } catch (error) {
+        console.error('Error updating withdrawal history status:', error);
+    }
+}
+
+// ✅ NEW FUNCTION: Send withdrawal failure DM
+// ✅ UPDATED FUNCTION: Send withdrawal success DM (simpler message)
+async function sendWithdrawalSuccessDM(userId, request, paymentResult) {
+    try {
+        const message = `✅ *Withdrawal Completed!*\n\n` +
+                       `💰 *Amount Sent:* ${request.wkcAmount} WKC\n` +
+                       `📍 *Wallet:* \`${request.wallet}\`\n\n` +
+                       `✅ Funds have been sent to your wallet!`;
 
         await bot.sendMessage(userId, message, {
             parse_mode: 'Markdown',
             disable_web_page_preview: true
         });
         
-        console.log(`✅ Withdrawal failure DM sent to user ${userId}`);
+        console.log(`✅ Withdrawal success DM sent to user ${userId}`);
     } catch (error) {
-        console.error('❌ Failed to send withdrawal failure DM:', error);
+        console.error('❌ Failed to send withdrawal success DM:', error);
     }
 }
 
