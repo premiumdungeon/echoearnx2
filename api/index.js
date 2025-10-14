@@ -273,25 +273,37 @@ bot.on('message', async (msg) => {
       last_name: msg.from.last_name
     });
     
-    if (text === '/getcode' && ALLOWED_USER_IDS.includes(userId)) {
-            const password = generateOneTimePassword();
-            const timestamp = Date.now();
-            
-            // Store in active passwords (you might want to use a database in production)
-            activePasswords.set(userId, {
-                password: password,
-                timestamp: timestamp
-            });
-            
-            const message = `🔐 *Admin Panel Access Code*\n\n` +
-                          `👤 User ID: ${userId}\n` +
-                          `🔑 One-Time Password: *${password}*\n\n` +
-                          `⏰ *Expires in 5 minutes*\n\n` +
-                          `💡 Go to your admin panel and use this code to login.`;
-            
-            await bot.sendMessage(userId, message, { parse_mode: 'Markdown' });
-            return;
-        }
+    // ✅ CORRECTED CODE:
+if (text === '/getcode') {
+    console.log(`🔐 /getcode command received from user: ${userId}`);
+    
+    // Convert userId to string for comparison with ALLOWED_USER_IDS array
+    const userIdStr = userId.toString();
+    
+    if (ALLOWED_USER_IDS.includes(userIdStr)) {
+        const password = generateOneTimePassword();
+        const timestamp = Date.now();
+        
+        // Store in active passwords
+        activePasswords.set(userIdStr, {
+            password: password,
+            timestamp: timestamp
+        });
+        
+        const message = `🔐 *Admin Panel Access Code*\n\n` +
+                      `👤 User ID: ${userIdStr}\n` +
+                      `🔑 One-Time Password: *${password}*\n\n` +
+                      `⏰ *Expires in 5 minutes*\n\n` +
+                      `💡 Go to your admin panel and use this code to login.`;
+        
+        await bot.sendMessage(userId, message, { parse_mode: 'Markdown' });
+        console.log(`✅ Password sent to user ${userIdStr}: ${password}`);
+    } else {
+        console.log(`❌ Unauthorized /getcode attempt from user: ${userIdStr}`);
+        await bot.sendMessage(userId, "❌ Access denied. You are not authorized to use this command.");
+    }
+    return;
+}
 
     // Handle /start command with referral parameter
     if (text.startsWith('/start')) {
