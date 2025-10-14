@@ -35,7 +35,7 @@ const bot = new TelegramBot(botToken);
 // Channel configuration
 const channels = {
   'EchoEarn': '-1002586398527',
-  'Echo Group': '-1002858278191'
+  'Tapy': '-1001605359797'
 };
 
 // In your index.js - make sure default data uses numbers
@@ -1166,6 +1166,79 @@ app.get('/api/user/withdrawal-history', async (req, res) => {
   } catch (error) {
     console.error('Error getting withdrawal history:', error);
     res.status(500).json({ success: false, error: 'Failed to get withdrawal history' });
+  }
+});
+
+// API endpoint to get daily rewards data
+app.get('/api/user/daily-rewards-data', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'Missing userId parameter' });
+    }
+    
+    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    
+    if (!userDoc.exists) {
+      return res.json({ 
+        success: true, 
+        dailyRewardsData: {
+          lastClaimDate: '',
+          claimsToday: 0,
+          totalClaims: 0,
+          history: []
+        }
+      });
+    }
+    
+    const user = userDoc.data();
+    
+    res.json({
+      success: true,
+      dailyRewardsData: user.dailyRewardsData || {
+        lastClaimDate: '',
+        claimsToday: 0,
+        totalClaims: 0,
+        history: []
+      }
+    });
+  } catch (error) {
+    console.error('Error getting daily rewards data:', error);
+    res.status(500).json({ success: false, error: 'Failed to get daily rewards data' });
+  }
+});
+
+// API endpoint to save daily rewards data
+app.post('/api/user/save-daily-rewards-data', async (req, res) => {
+  try {
+    const { userId, dailyRewardsData } = req.body;
+    
+    if (!userId || !dailyRewardsData) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
+    
+    console.log('💾 Saving daily rewards data for user:', userId);
+    console.log('📊 Data to save:', dailyRewardsData);
+    
+    // Save to user document
+    await db.collection('users').doc(userId.toString()).update({
+      dailyRewardsData: dailyRewardsData,
+      last_activity: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log('✅ Daily rewards data saved successfully');
+    
+    res.json({ 
+      success: true, 
+      message: 'Daily rewards data saved successfully' 
+    });
+  } catch (error) {
+    console.error('❌ Error saving daily rewards data:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to save daily rewards data: ' + error.message 
+    });
   }
 });
 
