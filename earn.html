@@ -2533,6 +2533,12 @@ async function claimDailyReward() {
     const rewardsData = await getDailyRewardsData();
     const today = getTodayDateString();
     
+    // Reset claims if it's a new day (IMPORTANT: Add this check)
+    if (rewardsData.lastClaimDate !== today) {
+        rewardsData.claimsToday = 0;
+        rewardsData.lastClaimDate = today;
+    }
+    
     // Check if user can claim today
     if (rewardsData.claimsToday >= config.dailyClaimsLimit) {
         alert('You have reached your daily claim limit!');
@@ -2545,14 +2551,19 @@ async function claimDailyReward() {
         Math.random() * (config.maxClaimAmount - config.minClaimAmount + 1)
     ) + config.minClaimAmount;
 
-    // ✅ INSTANT UI UPDATE: Disable button immediately with visual feedback
+    // ✅ INSTANT UI UPDATE: Disable button immediately
     unlockButton.disabled = true;
     unlockButton.innerHTML = '<span class="animate-pulse">Processing...</span>';
     unlockButton.classList.remove('bg-primary', 'hover:bg-primary/90');
     unlockButton.classList.add('bg-yellow-500', 'cursor-not-allowed');
 
-    // ✅ INSTANT UI UPDATE: Update rewards count immediately
+    // ✅ UPDATE THE DATA FIRST
     const newClaimsToday = rewardsData.claimsToday + 1;
+    rewardsData.claimsToday = newClaimsToday; // CRITICAL: Update the actual data
+    rewardsData.lastClaimDate = today;
+    rewardsData.totalClaims = (rewardsData.totalClaims || 0) + 1;
+
+    // ✅ INSTANT UI UPDATE: Update rewards count immediately
     const remaining = Math.max(0, config.dailyClaimsLimit - newClaimsToday);
     document.getElementById('rewards-remaining').textContent = `${remaining}/${config.dailyClaimsLimit}`;
 
@@ -2575,12 +2586,12 @@ async function claimDailyReward() {
     // Update local display immediately
     updateClaimHistoryDisplay(rewardsData.history);
 
-    // ✅ Show success message immediately (don't wait for background)
+    // ✅ Show success message immediately
     setTimeout(() => {
         alert(`🎉 Congratulations! You earned ${rewardAmount} points!\n\nYour balance will be updated shortly.`);
     }, 300);
 
-    // ✅ IMMEDIATELY RESTORE BUTTON STATE (don't wait for background process)
+    // ✅ IMMEDIATELY RESTORE BUTTON STATE
     setTimeout(() => {
         if (remaining > 0) {
             unlockButton.disabled = false;
@@ -2593,14 +2604,13 @@ async function claimDailyReward() {
             unlockButton.classList.remove('bg-yellow-500', 'cursor-not-allowed', 'bg-primary', 'hover:bg-primary/90');
             unlockButton.classList.add('bg-gray-400');
         }
-        isClaiming = false; // Reset flag here too
-    }, 1000); // Short delay to prevent immediate re-clicks
+        isClaiming = false;
+    }, 1000);
 
-    // ✅ PROCESS IN BACKGROUND (but don't wait for it)
-    processDailyRewardInBackground(rewardsData, newClaimsToday, today, rewardAmount, claimEntry)
+    // ✅ PROCESS IN BACKGROUND - PASS THE UPDATED DATA
+    processDailyRewardInBackground(rewardsData, rewardAmount, claimEntry)
         .catch(error => {
             console.error('Background processing error:', error);
-            // Don't show error to user - they already got their reward feedback
         });
 }
 
@@ -2617,61 +2627,56 @@ function revertButtonState(button, remaining) {
     }
 }
 
-// ✅ NEW FUNCTION: Process reward in background
-async function processDailyRewardInBackground(originalData, newClaimsToday, today, rewardAmount, claimEntry) {
+// ✅ UPDATED FUNCTION: Process reward in background
+async function processDailyRewardInBackground(updatedData, rewardAmount, claimEntry) {
     try {
         console.log('🔄 Processing daily reward in background...');
         
-        // Update the data for saving
-        const updatedData = {
-            ...originalData,
-            claimsToday: newClaimsToday,
-            lastClaimDate: today,
-            totalClaims: (originalData.totalClaims || 0) + 1,
-            history: originalData.history // Already updated with new entry
-        };
-
         // Keep only last 50 entries
         if (updatedData.history.length > 50) {
             updatedData.history = updatedData.history.slice(0, 50);
         }
 
-        // ✅ BACKGROUND TASK 1: Save to Firebase
-        await saveDailyRewardsData(updatedData);
-        console.log('✅ Daily rewards data saved to Firebase');
+        // ✅ BACKGROUND TASK 1: Save to Firebase (with retry logic)
+        const saveSuccess = await saveDailyRewardsData(updatedData);
+        if (!saveSuccess) {
+            console.error('❌ Failed to save daily rewards data');
+            // You might want to implement a fallback to localStorage here
+        } else {
+            console.log('✅ Daily rewards data saved to Firebase');
+        }
 
         // ✅ BACKGROUND TASK 2: Update balance via API
         const userData = localStorage.getItem('telegramUser');
         if (userData) {
             const user = JSON.parse(userData);
-            await logEarning(user.id, 'Daily Reward', rewardAmount);
-            console.log('✅ Balance updated via API');
+            const balanceSuccess = await logEarning(user.id, 'Daily Reward', rewardAmount);
+            if (balanceSuccess) {
+                console.log('✅ Balance updated via API');
+            } else {
+                console.error('❌ Failed to update balance');
+            }
         }
 
         // ✅ BACKGROUND TASK 3: Send DM via bot
-        await sendDailyRewardDM(rewardAmount);
-        console.log('✅ DM sent to user');
-
-        console.log('🎉 Background processing completed successfully');
+        await sendDailyRewardDM(rewardAmount, updatedData.claimsToday);
+        console.log('✅ Background processing completed');
 
     } catch (error) {
         console.error('❌ Error in background processing:', error);
-        // Even if background processing fails, the UI already updated
-        // User got their reward experience immediately
     }
 }
 
-// ✅ NEW FUNCTION: Send DM for daily reward
-async function sendDailyRewardDM(rewardAmount) {
+// ✅ UPDATED FUNCTION: Send DM for daily reward
+async function sendDailyRewardDM(rewardAmount, claimsToday) {
     try {
         const userData = localStorage.getItem('telegramUser');
         if (userData) {
             const user = JSON.parse(userData);
             const config = await getClaimsConfig();
-            const rewardsData = await getDailyRewardsData();
             
-            const remaining = Math.max(0, config.dailyClaimsLimit - rewardsData.claimsToday);
-            const message = `🎉 Daily Reward Claimed ${rewardsData.claimsToday}/${config.dailyClaimsLimit}\n\n+${rewardAmount} points added to your balance!\n\n📊 Remaining today: ${remaining}/${config.dailyClaimsLimit}\n💰 Keep earning!`;
+            const remaining = Math.max(0, config.dailyClaimsLimit - claimsToday);
+            const message = `🎉 Daily Reward Claimed ${claimsToday}/${config.dailyClaimsLimit}\n\n+${rewardAmount} points added to your balance!\n\n📊 Remaining today: ${remaining}/${config.dailyClaimsLimit}\n💰 Keep earning!`;
 
             await fetch('/api/bot/send-message', {
                 method: 'POST',
@@ -2686,7 +2691,6 @@ async function sendDailyRewardDM(rewardAmount) {
         }
     } catch (error) {
         console.error('Error sending DM:', error);
-        // Don't throw - DM failure shouldn't affect the reward
     }
 }
 
