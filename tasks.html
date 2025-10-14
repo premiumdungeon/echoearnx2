@@ -2434,15 +2434,22 @@ async function loadTasks() {
         const channelsContainer = document.querySelector('#radix-\\:r1\\:-content-channels .space-y-4');
         if (channelsContainer) {
             let channelsHTML = '<h3 class="font-semibold text-lg">Join Channels</h3>';
+            let hasVisibleChannelTasks = false;
             
             if (channelTasks.length > 0) {
                 for (const task of channelTasks) {
                     const isCompleted = user && await isTaskCompleted(user.id, task.id);
-                    const buttonClass = isCompleted ? 
-                        'bg-gray-400 cursor-not-allowed' : 
-                        'bg-secondary hover:bg-secondary/80';
-                    const buttonText = isCompleted ? 'Completed' : 'Claim';
-                    const buttonDisabled = isCompleted ? 'disabled' : '';
+                    
+                    // ✅ FIX: Hide completed tasks
+                    if (isCompleted) {
+                        console.log(`🔄 Hiding completed channel task: ${task.title}`);
+                        continue;
+                    }
+                    
+                    hasVisibleChannelTasks = true;
+                    
+                    const buttonClass = 'bg-secondary hover:bg-secondary/80';
+                    const buttonText = 'Claim';
                     
                     channelsHTML += `
                         <div class="rounded-xl border bg-card text-card-foreground shadow">
@@ -2460,13 +2467,35 @@ async function loadTasks() {
                                 </div>
                                 <div class="flex gap-2 mt-3">
                                     <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 rounded-md px-3 text-xs flex-1" onclick="joinTask('${task.id}')">Join</button>
-                                    <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 ${buttonClass} text-secondary-foreground shadow-sm h-8 rounded-md px-3 text-xs flex-1" onclick="claimTask('${task.id}')" ${buttonDisabled}>${buttonText}</button>
+                                    <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 ${buttonClass} text-secondary-foreground shadow-sm h-8 rounded-md px-3 text-xs flex-1" onclick="claimTask('${task.id}')">${buttonText}</button>
                                 </div>
                             </div>
                         </div>
                     `;
                 }
-            } else {
+            }
+            
+            if (!hasVisibleChannelTasks && channelTasks.length > 0) {
+                channelsHTML += `
+                    <div class="rounded-xl border bg-card text-card-foreground shadow p-8 text-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-party-popper text-muted-foreground mb-4">
+                                <path d="M5.8 11.3 2 22l10.7-3.79"/>
+                                <path d="M4 3h.01"/>
+                                <path d="M22 8h.01"/>
+                                <path d="M15 2h.01"/>
+                                <path d="M22 20h.01"/>
+                                <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
+                                <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17"/>
+                                <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7"/>
+                                <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
+                            </svg>
+                            <p class="font-bold text-xl mb-2">All Channel Tasks Completed! 🎉</p>
+                            <p class="text-muted-foreground">You've completed all available channel tasks. Check back later for new tasks!</p>
+                        </div>
+                    </div>
+                `;
+            } else if (channelTasks.length === 0) {
                 channelsHTML += `
                     <div class="rounded-xl border bg-card text-card-foreground shadow p-8 text-center">
                         <div class="flex flex-col items-center justify-center">
@@ -2492,15 +2521,22 @@ async function loadTasks() {
         const groupsContainer = document.querySelector('#radix-\\:r1\\:-content-channels .space-y-4');
         if (groupsContainer) {
             let groupsHTML = '<h3 class="font-semibold text-lg mt-6">Join Groups</h3>';
+            let hasVisibleGroupTasks = false;
             
             if (groupTasks.length > 0) {
                 for (const task of groupTasks) {
                     const isCompleted = user && await isTaskCompleted(user.id, task.id);
-                    const buttonClass = isCompleted ? 
-                        'bg-gray-400 cursor-not-allowed' : 
-                        'bg-secondary hover:bg-secondary/80';
-                    const buttonText = isCompleted ? 'Completed' : 'Claim';
-                    const buttonDisabled = isCompleted ? 'disabled' : '';
+                    
+                    // ✅ FIX: Hide completed tasks
+                    if (isCompleted) {
+                        console.log(`🔄 Hiding completed group task: ${task.title}`);
+                        continue;
+                    }
+                    
+                    hasVisibleGroupTasks = true;
+                    
+                    const buttonClass = 'bg-secondary hover:bg-secondary/80';
+                    const buttonText = 'Claim';
                     
                     groupsHTML += `
                         <div class="rounded-xl border bg-card text-card-foreground shadow">
@@ -2518,13 +2554,35 @@ async function loadTasks() {
                                 </div>
                                 <div class="flex gap-2 mt-3">
                                     <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 rounded-md px-3 text-xs flex-1" onclick="joinTask('${task.id}')">Join</button>
-                                    <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 ${buttonClass} text-secondary-foreground shadow-sm h-8 rounded-md px-3 text-xs flex-1" onclick="claimTask('${task.id}')" ${buttonDisabled}>${buttonText}</button>
+                                    <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 ${buttonClass} text-secondary-foreground shadow-sm h-8 rounded-md px-3 text-xs flex-1" onclick="claimTask('${task.id}')">${buttonText}</button>
                                 </div>
                             </div>
                         </div>
                     `;
                 }
-            } else {
+            }
+            
+            if (!hasVisibleGroupTasks && groupTasks.length > 0) {
+                groupsHTML += `
+                    <div class="rounded-xl border bg-card text-card-foreground shadow p-8 text-center">
+                        <div class="flex flex-col items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-party-popper text-muted-foreground mb-4">
+                                <path d="M5.8 11.3 2 22l10.7-3.79"/>
+                                <path d="M4 3h.01"/>
+                                <path d="M22 8h.01"/>
+                                <path d="M15 2h.01"/>
+                                <path d="M22 20h.01"/>
+                                <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
+                                <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17"/>
+                                <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7"/>
+                                <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
+                            </svg>
+                            <p class="font-bold text-xl mb-2">All Group Tasks Completed! 🎉</p>
+                            <p class="text-muted-foreground">You've completed all available group tasks. Check back later for new tasks!</p>
+                        </div>
+                    </div>
+                `;
+            } else if (groupTasks.length === 0) {
                 groupsHTML += `
                     <div class="rounded-xl border bg-card text-card-foreground shadow p-8 text-center">
                         <div class="flex flex-col items-center justify-center">
@@ -3001,6 +3059,7 @@ async function submitSocialTask(taskId, type) {
 }
 
 // Function to load social tasks into tabs
+// Function to load social tasks into tabs
 async function loadSocialTasks(tabId, taskType, title) {
     const tabContent = document.getElementById(`radix-:r1:-content-${tabId}`);
     const socialTasks = await loadTasksFromFirestore(taskType);
@@ -3014,6 +3073,8 @@ async function loadSocialTasks(tabId, taskType, title) {
     `;
     
     if (socialTasks.length > 0) {
+        let hasVisibleTasks = false;
+        
         for (const task of socialTasks) {
             const isCompleted = user && await isTaskCompleted(user.id, task.id);
             const isPending = user && await isTaskPending(user.id, task.id);
@@ -3021,13 +3082,21 @@ async function loadSocialTasks(tabId, taskType, title) {
             // Check if task has reached its limit
             const isTaskFull = task.taskLimit > 0 && task.completions >= task.taskLimit;
             
+            // ✅ FIX: Hide completed tasks from user view
+            if (isCompleted) {
+                console.log(`🔄 Hiding completed task: ${task.title}`);
+                continue; // Skip this task - don't show it to user
+            }
+            
+            hasVisibleTasks = true;
+            
             let buttonClass = 'bg-secondary hover:bg-secondary/80';
             let buttonText = 'Claim';
             let buttonDisabled = '';
             
-            if (isCompleted || isTaskFull) {
+            if (isTaskFull) {
                 buttonClass = 'bg-gray-400 cursor-not-allowed';
-                buttonText = isCompleted ? 'Completed' : 'Task Full';
+                buttonText = 'Task Full';
                 buttonDisabled = 'disabled';
             } else if (isPending) {
                 buttonClass = 'bg-yellow-400 cursor-not-allowed';
@@ -3045,17 +3114,38 @@ async function loadSocialTasks(tabId, taskType, title) {
                         <p class="text-xs text-gray-500">Completions: ${task.completions || 0}/${task.taskLimit || 'Unlimited'}</p>
                         ${isTaskFull ? '<p class="text-xs text-red-500">❌ Task reached maximum completions</p>' : ''}
                         ${isPending ? '<p class="text-xs text-yellow-500">⏳ Waiting for admin approval</p>' : ''}
-                        ${isCompleted ? '<p class="text-xs text-green-500">✅ You completed this task</p>' : ''}
                     </div>
                     <div class="text-right ml-4">
                         <p class="text-green-500 font-bold text-lg">+${task.amount}</p>
                     </div>
                     </div>
                     <div class="flex gap-2 mt-3">
-                    <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 rounded-md px-3 text-xs flex-1" onclick="joinTask('${task.id}')" ${isCompleted || isTaskFull ? 'disabled' : ''}>Join</button>
+                    <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-8 rounded-md px-3 text-xs flex-1" onclick="joinTask('${task.id}')" ${isTaskFull ? 'disabled' : ''}>Join</button>
                     <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 ${buttonClass} text-secondary-foreground shadow-sm h-8 rounded-md px-3 text-xs flex-1" onclick="claimSocialTask('${task.id}')" ${buttonDisabled}>${buttonText}</button>
                     </div>
                 </div>
+                </div>
+            `;
+        }
+        
+        if (!hasVisibleTasks) {
+            tasksHTML += `
+                <div class="rounded-xl border bg-card text-card-foreground shadow p-8 text-center">
+                    <div class="flex flex-col items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-party-popper text-muted-foreground mb-4">
+                        <path d="M5.8 11.3 2 22l10.7-3.79"/>
+                        <path d="M4 3h.01"/>
+                        <path d="M22 8h.01"/>
+                        <path d="M15 2h.01"/>
+                        <path d="M22 20h.01"/>
+                        <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
+                        <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17"/>
+                        <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7"/>
+                        <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
+                    </svg>
+                    <p class="font-bold text-xl mb-2">All ${title} Tasks Completed! 🎉</p>
+                    <p class="text-muted-foreground">You've completed all available ${title} tasks. Check back later for new tasks!</p>
+                    </div>
                 </div>
             `;
         }
