@@ -60,6 +60,11 @@
     color: #333;
   }
   
+  .rank-1 { background: linear-gradient(135deg, #FFD700, #FFA500); }
+  .rank-2 { background: linear-gradient(135deg, #C0C0C0, #A0A0A0); }
+  .rank-3 { background: linear-gradient(135deg, #CD7F32, #A56C27); }
+  }
+  
   @keyframes rotate {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -2164,163 +2169,359 @@ video {
 }
 
 /*# sourceMappingURL=data:application/json;base64,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bUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQSxtQkFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQSxXQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBLHVCQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLHVCQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLHNCQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBLHNCQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5COztFQUFBO0lBQUE7RUFBbUI7QUFBQTtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUEseUJBQW1CO0tBQW5CLHNCQUFtQjtVQUFuQjtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLHVCQUFtQjtFQUFuQiwrREFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQSx1QkFBbUI7RUFBbkIsZ0VBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsdUJBQW1CO0VBQW5CLDhEQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBLHVCQUFtQjtFQUFuQiwrREFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQSx1QkFBbUI7RUFBbkIsNERBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsdUJBQW1CO0VBQW5CLDhEQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLGlEQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBLGtEQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQSxrQkFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLGtCQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBLGtCQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBLGtCQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUEsc0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsb0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsc0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEscUJBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsa0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsa0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsOEJBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsb0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEscUJBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsbUJBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsbUJBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsb0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsaUJBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsbUJBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQSxpQkFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQSxtQkFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQSxrQkFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLGVBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsbUJBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsbUJBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsa0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsa0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLG9CQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUEsb0JBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLDBFQUFtQjtFQUFuQiw4RkFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQSwrRUFBbUI7RUFBbkIsbUdBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsNkVBQW1CO0VBQW5CLGlHQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBLDBDQUFtQjtFQUFuQix1REFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQSw4QkFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLDJHQUFtQjtFQUFuQix5R0FBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBLHdCQUFtQjtFQUFuQix3REFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQSwrRkFBbUI7RUFBbkIsd0RBQW1CO0VBQW5CO0FBQW1CO0FBQW5CO0VBQUEsNEJBQW1CO0VBQW5CLHdEQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBLDhCQUFtQjtFQUFuQix3REFBbUI7RUFBbkI7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjs7RUFBQTtJQUFBLG1DQUFtQjtJQUFuQjtFQUFtQjtBQUFBO0FBQW5COztFQUFBO0lBQUEsa0NBQW1CO0lBQW5CO0VBQW1CO0FBQUE7QUFBbkI7RUFBQSxxQkFBbUI7RUFBbkIseUJBQW1CO0VBQW5CLDJCQUFtQjtFQUFuQix5QkFBbUI7RUFBbkIsMEJBQW1CO0VBQW5CLCtCQUFtQjtFQUFuQjtBQUFtQjtBQUFuQjtFQUFBO0FBQW1CO0FBQW5CO0VBQUE7QUFBbUI7QUFBbkI7RUFBQTtBQUFtQjtBQUFuQjtFQUFBO0FBQW1COztBQUhuQjtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBLG1CQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQSw4QkE0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUEsMkdBNERBO0VBNURBLHlHQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQSwyR0E0REE7RUE1REEseUdBNERBO0VBNURBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBLDhCQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQSwyR0E0REE7RUE1REEseUdBNERBO0VBNURBO0FBNERBOztBQTVEQTtFQUFBLDJHQTREQTtFQTVEQSx5R0E0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUEseUJBNERBO0VBNURBO0FBNERBOztBQTVEQTtFQUFBLDBCQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQSx5QkE0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUEsMEJBNERBO0VBNURBO0FBNERBOztBQTVEQTtFQUFBLHNCQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQSxxQkE0REE7RUE1REE7QUE0REE7O0FBNURBOztFQUFBO0lBQUE7RUE0REE7O0VBNURBO0lBQUE7RUE0REE7QUFBQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7O0VBQUE7SUFBQTtFQTREQTs7RUE1REE7SUFBQTtFQTREQTtBQUFBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBLDBFQTREQTtFQTVEQSw4RkE0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUEscUJBNERBO0VBNURBLHlCQTREQTtFQTVEQSwyQkE0REE7RUE1REEseUJBNERBO0VBNURBLDBCQTREQTtFQTVEQSwrQkE0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUEsb0JBNERBO0VBNURBLHlCQTREQTtFQTVEQSwwQkE0REE7RUE1REEsd0JBNERBO0VBNURBLHlCQTREQTtFQTVEQSw4QkE0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUEsMkdBNERBO0VBNURBLHlHQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7O0VBQUE7SUFBQTtFQTREQTs7RUE1REE7SUFBQTtFQTREQTs7RUE1REE7SUFBQSx1QkE0REE7SUE1REEsc0RBNERBO0lBNURBO0VBNERBOztFQTVEQTtJQUFBO0VBNERBOztFQTVEQTtJQUFBO0VBNERBO0FBQUE7O0FBNURBOztFQUFBO0lBQUE7RUE0REE7O0VBNURBO0lBQUE7RUE0REE7O0VBNURBO0lBQUEsbUJBNERBO0lBNURBO0VBNERBO0FBQUE7O0FBNURBO0VBQUEsaURBNERBO0VBNURBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBLGtEQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQSxxQkE0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUEsZ0JBNERBO0VBNURBLG9CQTREQTtFQTVEQSw0QkE0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUEsa0JBNERBO0VBNURBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBLGVBNERBO0VBNURBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBO0FBNERBOztBQTVEQTtFQUFBLG1CQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQSxvQkE0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUEscUJBNERBO0VBNURBO0FBNERBOztBQTVEQTtFQUFBLGtCQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQSxvQkE0REE7RUE1REE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUE7QUE0REE7O0FBNURBO0VBQUEsb0JBNERBO0VBNURBO0FBNERBOztBQTVEQTtFQUFBLG9CQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQSxXQTREQTtFQTVEQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQTs7QUE1REE7RUFBQTtBQTREQSIsIm5hbWVzIjpbXSwic291cmNlcyI6WyIvaG9tZS9hcHAvY2xpZW50L3NyYy9pbmRleC5jc3MiXSwic291cmNlc0NvbnRlbnQiOlsiXG5AdGFpbHdpbmQgYmFzZTtcbkB0YWlsd2luZCBjb21wb25lbnRzO1xuQHRhaWx3aW5kIHV0aWxpdGllcztcblxuQGxheWVyIGJhc2Uge1xuICA6cm9vdCB7XG4gICAgLS1iYWNrZ3JvdW5kOiAwIDAlIDAlO1xuICAgIC0tZm9yZWdyb3VuZDogMCAwJSAxMDAlO1xuICAgIC0tY2FyZDogMCAwJSAzLjklO1xuICAgIC0tY2FyZC1mb3JlZ3JvdW5kOiAwIDAlIDk4JTtcbiAgICAtLXBvcG92ZXI6IDAgMCUgMy45JTtcbiAgICAtLXBvcG92ZXItZm9yZWdyb3VuZDogMCAwJSA5OCU7XG4gICAgLS1wcmltYXJ5OiAwIDAlIDk4JTtcbiAgICAtLXByaW1hcnktZm9yZWdyb3VuZDogMCAwJSA5JTtcbiAgICAtLXNlY29uZGFyeTogMCAwJSAxNC45JTtcbiAgICAtLXNlY29uZGFyeS1mb3JlZ3JvdW5kOiAwIDAlIDk4JTtcbiAgICAtLW11dGVkOiAwIDAlIDE0LjklO1xuICAgIC0tbXV0ZWQtZm9yZWdyb3VuZDogMCAwJSA2My45JTtcbiAgICAtLWFjY2VudDogMCAwJSAxNC45JTtcbiAgICAtLWFjY2VudC1mb3JlZ3JvdW5kOiAwIDAlIDk4JTtcbiAgICAtLWRlc3RydWN0aXZlOiAwIDYyLjglIDMwLjYlO1xuICAgIC0tZGVzdHJ1Y3RpdmUtZm9yZWdyb3VuZDogMCAwJSA5OCU7XG4gICAgLS1ib3JkZXI6IDAgMCUgMTQuOSU7XG4gICAgLS1pbnB1dDogMCAwJSAxNC45JTtcbiAgICAtLXJpbmc6IDAgMCUgODMuMSU7XG4gICAgLS1yYWRpdXM6IDAuNXJlbTtcbiAgfVxuXG4gIC5kYXJrIHtcbiAgICAtLWJhY2tncm91bmQ6IDAgMCUgMTAwJTtcbiAgICAtLWZvcmVncm91bmQ6IDAgMCUgMCU7XG4gICAgLS1jYXJkOiAwIDAlIDEwMCU7XG4gICAgLS1jYXJkLWZvcmVncm91bmQ6IDAgMCUgMCU7XG4gICAgLS1wb3BvdmVyOiAwIDAlIDEwMCU7XG4gICAgLS1wb3BvdmVyLWZvcmVncm91bmQ6IDAgMCUgMCU7XG4gICAgLS1wcmltYXJ5OiAwIDAlIDAlO1xuICAgIC0tcHJpbWFyeS1mb3JlZ3JvdW5kOiAwIDAlIDEwMCU7XG4gICAgLS1zZWNvbmRhcnk6IDAgMCUgOTYuMSU7XG4gICAgLS1zZWNvbmRhcnktZm9yZWdyb3VuZDogMCAwJSA5JTtcbiAgICAtLW11dGVkOiAwIDAlIDk2LjElO1xuICAgIC0tbXV0ZWQtZm9yZWdyb3VuZDogMCAwJSA0NS4xJTtcbiAgICAtLWFjY2VudDogMCAwJSA5Ni4xJTtcbiAgICAtLWFjY2VudC1mb3JlZ3JvdW5kOiAwIDAlIDklO1xuICAgIC0tZGVzdHJ1Y3RpdmU6IDAgODQuMiUgNjAuMiU7XG4gICAgLS1kZXN0cnVjdGl2ZS1mb3JlZ3JvdW5kOiAwIDAlIDk4JTtcbiAgICAtLWJvcmRlcjogMCAwJSA4OS44JTtcbiAgICAtLWlucHV0OiAwIDAlIDg5LjglO1xuICAgIC0tcmluZzogMCAwJSAwJTtcbiAgfVxufVxuXG5AbGF5ZXIgYmFzZSB7XG4gICoge1xuICAgIEBhcHBseSBib3JkZXItYm9yZGVyO1xuICB9XG4gIGJvZHkge1xuICAgIEBhcHBseSBiZy1iYWNrZ3JvdW5kIHRleHQtZm9yZWdyb3VuZDtcbiAgfVxufVxuIl0sInZlcnNpb24iOjN9 */</style>
- </head> 
- <body>
+</head>
+<body>
   <div id="root" class="contents">
-   <div class="flex flex-col min-h-screen bg-background">
-    <header class="bg-primary text-primary-foreground p-4">
-     <div class="container mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-bold">EchoEARN</h1>
-      <div class="flex items-center gap-3 text-right" id="user-profile">
-       <div>
-        <p class="font-semibold" id="user-fullname">Full Name</p>
-        <p class="text-sm opacity-80" id="user-username">@username</p>
-       </div>
-       <span class="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full" id="user-avatar">
-        <span class="flex h-full w-full items-center justify-center rounded-full bg-muted">U</span>
-       </span>
-      </div>
-     </div>
-    </header>
-    <main class="flex-grow container mx-auto px-4 py-4">
-     <div class="space-y-4 pb-16">
-      <div class="rounded-xl border shadow bg-primary text-primary-foreground">
-  <div class="text-center p-4">
-    <p class="text-base">Total Balance</p>
-    <p class="text-4xl font-bold my-1" id="balance-display">•••</p>
-    <p class="text-xs opacity-90">0 friends invited • Rank #648</p>
-    <p class="text-xs opacity-90 mt-1">Conversion rate: 1 point = 20 Ton</p>
-  </div>
-</div>
-      <div>
-       <h2 class="text-lg font-semibold mb-2">Quick Actions</h2>
-       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-14 text-base" href="withdraw.html" data-discover="true">Withdraw</a>
-        <a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-14 text-base" href="advertise.html" data-discover="true">Advertise</a>
-        <a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-14 text-base" href="wallet.html" data-discover="true">Wallet</a>
-        <a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-14 text-base" href="/history.html" data-discover="true">History</a>
-       </div>
-      </div>
-      <div>
-       <h2 class="text-lg font-semibold mb-2">EchoEARN Leaderboard Rank</h2>
-       <div class="flex justify-center items-center p-8">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle h-8 w-8 animate-spin text-primary">
-         <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-        </svg>
-       </div>
-      </div>
-     </div>
-    </main>
-    <footer class="sticky bottom-0 bg-card border-t shadow-t-lg">
-     <nav class="container mx-auto flex justify-around items-center h-16">
-      <a class="flex flex-col items-center justify-center text-center w-1/5" href="home.html" data-discover="true">
-       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house h-6 w-6 mb-1 text-primary">
-        <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
-        <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-       </svg><span class="text-xs text-primary font-semibold">Home</span></a>
-      <a class="flex flex-col items-center justify-center text-center w-1/5" href="tasks.html" data-discover="true">
-       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-checks h-6 w-6 mb-1 text-muted-foreground">
-        <path d="m3 17 2 2 4-4"></path>
-        <path d="m3 7 2 2 4-4"></path>
-        <path d="M13 6h8"></path>
-        <path d="M13 12h8"></path>
-        <path d="M13 18h8"></path>
-       </svg><span class="text-xs text-muted-foreground">Tasks</span></a>
-      <a class="flex flex-col items-center justify-center text-center w-1/5" href="earn.html" data-discover="true">
-       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gift h-6 w-6 mb-1 text-muted-foreground">
-        <rect x="3" y="8" width="18" height="4" rx="1"></rect>
-        <path d="M12 8v13"></path>
-        <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path>
-        <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path>
-       </svg><span class="text-xs text-muted-foreground">Earn</span></a>
-      <a class="flex flex-col items-center justify-center text-center w-1/5" href="ads.html" data-discover="true">
-       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-megaphone h-6 w-6 mb-1 text-muted-foreground">
-        <path d="m3 11 18-5v12L3 14v-3z"></path>
-        <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
-       </svg><span class="text-xs text-muted-foreground">Ads</span></a>
-      <a class="flex flex-col items-center justify-center text-center w-1/5" href="profile.html" data-discover="true">
-       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user h-6 w-6 mb-1 text-muted-foreground">
-        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-        <circle cx="12" cy="7" r="4"></circle>
-       </svg><span class="text-xs text-muted-foreground">Profile</span></a>
-     </nav>
-    </footer>
-   </div>
-  </div>
-   <script>
-  // Create and show loading overlay immediately
-  const loadingOverlay = document.createElement('div');
-  loadingOverlay.id = 'loading-overlay';
-  loadingOverlay.innerHTML = `
-    <div class="loading-container">
-      <div class="loading-dots">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </div>
-      <div class="loading-text">EchoEARN</div>
+    <div class="flex flex-col min-h-screen bg-background">
+      <header class="bg-primary text-primary-foreground p-4">
+        <div class="container mx-auto flex justify-between items-center">
+          <h1 class="text-xl font-bold">EchoEARN</h1>
+          <div class="flex items-center gap-3 text-right" id="user-profile">
+            <div>
+              <p class="font-semibold" id="user-fullname">Full Name</p>
+              <p class="text-sm opacity-80" id="user-username">@username</p>
+            </div>
+            <span class="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full" id="user-avatar">
+              <span class="flex h-full w-full items-center justify-center rounded-full bg-muted">U</span>
+            </span>
+          </div>
+        </div>
+      </header>
+      <main class="flex-grow container mx-auto px-4 py-4">
+        <div class="space-y-4 pb-16">
+          <!-- Balance Card -->
+          <div class="rounded-xl border shadow bg-primary text-primary-foreground">
+            <div class="text-center p-4">
+              <p class="text-base">Total Balance</p>
+              <p class="text-4xl font-bold my-1" id="balance-display">•••</p>
+              <p class="text-xs opacity-90" id="referral-stats">Loading...</p>
+              <p class="text-xs opacity-90 mt-1">Conversion rate: 1 point = 20 Ton</p>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div>
+            <h2 class="text-lg font-semibold mb-2">Quick Actions</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-14 text-base" href="withdraw.html">Withdraw</a>
+              <a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-14 text-base" href="advertise.html">Advertise</a>
+              <a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-14 text-base" href="wallet.html">Wallet</a>
+              <a class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 h-14 text-base" href="history.html">History</a>
+            </div>
+          </div>
+
+          <!-- Leaderboard -->
+          <div>
+            <h2 class="text-lg font-semibold mb-2">EchoEARN Leaderboard Rank</h2>
+            <div id="leaderboard-container">
+              <div class="flex justify-center items-center p-8">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle h-8 w-8 animate-spin text-primary">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+      <footer class="sticky bottom-0 bg-card border-t shadow-t-lg">
+        <nav class="container mx-auto flex justify-around items-center h-16">
+          <a class="flex flex-col items-center justify-center text-center w-1/5" href="home.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house h-6 w-6 mb-1 text-primary">
+              <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
+              <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+            <span class="text-xs text-primary font-semibold">Home</span>
+          </a>
+          <a class="flex flex-col items-center justify-center text-center w-1/5" href="tasks.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-checks h-6 w-6 mb-1 text-muted-foreground">
+              <path d="m3 17 2 2 4-4"></path>
+              <path d="m3 7 2 2 4-4"></path>
+              <path d="M13 6h8"></path>
+              <path d="M13 12h8"></path>
+              <path d="M13 18h8"></path>
+            </svg>
+            <span class="text-xs text-muted-foreground">Tasks</span>
+          </a>
+          <a class="flex flex-col items-center justify-center text-center w-1/5" href="earn.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gift h-6 w-6 mb-1 text-muted-foreground">
+              <rect x="3" y="8" width="18" height="4" rx="1"></rect>
+              <path d="M12 8v13"></path>
+              <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path>
+              <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path>
+            </svg>
+            <span class="text-xs text-muted-foreground">Earn</span>
+          </a>
+          <a class="flex flex-col items-center justify-center text-center w-1/5" href="ads.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-megaphone h-6 w-6 mb-1 text-muted-foreground">
+              <path d="m3 11 18-5v12L3 14v-3z"></path>
+              <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+            </svg>
+            <span class="text-xs text-muted-foreground">Ads</span>
+          </a>
+          <a class="flex flex-col items-center justify-center text-center w-1/5" href="profile.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user h-6 w-6 mb-1 text-muted-foreground">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span class="text-xs text-muted-foreground">Profile</span>
+          </a>
+        </nav>
+      </footer>
     </div>
-  `;
-  
-  // Add to body immediately (before DOMContentLoaded)
-  document.body.appendChild(loadingOverlay);
-  
-  document.addEventListener('DOMContentLoaded', function() {
-    // Remove after 1 second (1000ms)
-    setTimeout(() => {
-      loadingOverlay.style.opacity = '0';
+  </div>
+
+  <script>
+    // Create and show loading overlay immediately
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'loading-overlay';
+    loadingOverlay.innerHTML = `
+      <div class="loading-container">
+        <div class="loading-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <div class="loading-text">EchoEARN</div>
+      </div>
+    `;
+    
+    document.body.appendChild(loadingOverlay);
+    
+    document.addEventListener('DOMContentLoaded', function() {
       setTimeout(() => {
-        if (document.body.contains(loadingOverlay)) {
-          document.body.removeChild(loadingOverlay);
+        loadingOverlay.style.opacity = '0';
+        setTimeout(() => {
+          if (document.body.contains(loadingOverlay)) {
+            document.body.removeChild(loadingOverlay);
+          }
+        }, 300);
+      }, 1000);
+      
+      // Load user data
+      const userData = localStorage.getItem('telegramUser');
+      
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          const fullNameElement = document.getElementById('user-fullname');
+          const usernameElement = document.getElementById('user-username');
+          const avatarElement = document.getElementById('user-avatar');
+          
+          const fullName = `${user.first_name} ${user.last_name || ''}`.trim();
+          fullNameElement.textContent = fullName;
+          
+          if (user.username) {
+            usernameElement.textContent = `@${user.username}`;
+          } else {
+            usernameElement.textContent = user.first_name;
+          }
+          
+          if (user.photo_url) {
+            avatarElement.innerHTML = `
+              <img src="${user.photo_url}" alt="${fullName}" class="h-full w-full object-cover rounded-full">
+            `;
+          } else {
+            const initials = user.first_name.charAt(0) + (user.last_name ? user.last_name.charAt(0) : '');
+            avatarElement.querySelector('span').textContent = initials;
+          }
+          
+          // Initialize systems
+          initializeBalance();
+          initializeReferralSystem();
+          loadLeaderboard(user.id);
+          updateReferralStats(user.id);
+          
+        } catch (error) {
+          console.error('Error parsing user data:', error);
         }
-      }, 300);
-    }, 1000);
-    
-    // Rest of your DOMContentLoaded code...
-    const userData = localStorage.getItem('telegramUser');
-    
-    if (userData) {
+      } else {
+        console.log('No user data found in localStorage');
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Load leaderboard data
+    async function loadLeaderboard(userId) {
       try {
-        const user = JSON.parse(userData);
-        const fullNameElement = document.getElementById('user-fullname');
-        const usernameElement = document.getElementById('user-username');
-        const avatarElement = document.getElementById('user-avatar');
-        
-        const fullName = `${user.first_name} ${user.last_name || ''}`.trim();
-        fullNameElement.textContent = fullName;
-        
-        if (user.username) {
-          usernameElement.textContent = `@${user.username}`;
+        const response = await fetch(`/api/leaderboard?userId=${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            displayLeaderboard(data.leaderboard, data.userRank);
+          } else {
+            showLeaderboardError();
+          }
         } else {
-          usernameElement.textContent = user.first_name;
-        }
-        
-        if (user.photo_url) {
-          avatarElement.innerHTML = `
-            <img src="${user.photo_url}" alt="${fullName}" class="h-full w-full object-cover">
-          `;
-        } else {
-          const initials = user.first_name.charAt(0) + (user.last_name ? user.last_name.charAt(0) : '');
-          avatarElement.querySelector('span').textContent = initials;
+          showLeaderboardError();
         }
       } catch (error) {
-        console.error('Error parsing user data:', error);
+        console.error('Error loading leaderboard:', error);
+        showLeaderboardError();
       }
-    } else {
-      console.log('No user data found in localStorage');
-      window.location.href = 'index.html';
     }
-    
-    initializeBalance();
-    initializeReferralSystem();
-    updateUserProfile();
-});
-</script>
-<script src="common.js"></script>
- </body>
+
+    // Display leaderboard
+    function displayLeaderboard(leaderboard, userRank) {
+      const container = document.getElementById('leaderboard-container');
+      
+      if (!leaderboard || leaderboard.length === 0) {
+        container.innerHTML = `
+          <div class="rounded-xl border bg-card text-card-foreground shadow p-8 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trophy text-muted-foreground mx-auto mb-4">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+              <path d="M4 22h16"/>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+            <p class="font-semibold text-lg mb-2">No Leaderboard Data</p>
+            <p class="text-muted-foreground">Complete tasks to appear on the leaderboard!</p>
+          </div>
+        `;
+        return;
+      }
+
+      let leaderboardHTML = `
+        <div class="space-y-3">
+          <div class="text-sm text-muted-foreground mb-2">
+            Your Rank: <span class="font-semibold text-primary">#${userRank}</span>
+          </div>
+      `;
+
+      // Top 3 with special styling
+      leaderboard.slice(0, 3).forEach((user, index) => {
+        const rank = index + 1;
+        const rankClass = `rank-${rank}`;
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
+        
+        leaderboardHTML += `
+          <div class="rounded-xl p-4 ${rankClass} text-white shadow-lg">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="text-2xl">${medal}</div>
+                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold">
+                  ${rank}
+                </div>
+                <div>
+                  <p class="font-semibold">${user.username || 'Anonymous'}</p>
+                  <p class="text-white/80 text-sm">${user.referral_count || 0} friends • ${user.balance || 0} pts</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-bold text-lg">${user.balance || 0}</p>
+                <p class="text-white/80 text-sm">points</p>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      // Rest of the leaderboard
+      if (leaderboard.length > 3) {
+        leaderboardHTML += `<div class="space-y-2 mt-4">`;
+        
+        leaderboard.slice(3, 10).forEach((user, index) => {
+          const rank = index + 4;
+          const isCurrentUser = user.id === getUserId();
+          const bgClass = isCurrentUser ? 'bg-primary/10 border-primary' : 'bg-card';
+          
+          leaderboardHTML += `
+            <div class="rounded-xl border p-3 ${bgClass}">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                    ${rank}
+                  </div>
+                  <div>
+                    <p class="font-semibold ${isCurrentUser ? 'text-primary' : ''}">
+                      ${user.username || 'Anonymous'} ${isCurrentUser ? '(You)' : ''}
+                    </p>
+                    <p class="text-muted-foreground text-sm">${user.referral_count || 0} friends</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="font-semibold">${user.balance || 0}</p>
+                  <p class="text-muted-foreground text-sm">points</p>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        leaderboardHTML += `</div>`;
+      }
+
+      leaderboardHTML += `</div>`;
+      container.innerHTML = leaderboardHTML;
+    }
+
+    // Update referral stats in balance card
+    async function updateReferralStats(userId) {
+      try {
+        const response = await fetch(`/api/user/referral-stats?userId=${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            const stats = data.stats;
+            const statsElement = document.getElementById('referral-stats');
+            statsElement.textContent = `${stats.totalInvites || 0} friends invited • Rank #${await getUserRank(userId)}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error updating referral stats:', error);
+      }
+    }
+
+    // Get user rank
+    async function getUserRank(userId) {
+      try {
+        const response = await fetch(`/api/leaderboard/rank?userId=${userId}`);
+        if (response.ok) {
+          const data = await response.json();
+          return data.success ? data.rank : '?';
+        }
+      } catch (error) {
+        console.error('Error getting user rank:', error);
+      }
+      return '?';
+    }
+
+    // Show leaderboard error state
+    function showLeaderboardError() {
+      const container = document.getElementById('leaderboard-container');
+      container.innerHTML = `
+        <div class="rounded-xl border bg-card text-card-foreground shadow p-8 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle text-yellow-500 mx-auto mb-4">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+            <path d="M12 9v4"/>
+            <path d="M12 17h.01"/>
+          </svg>
+          <p class="font-semibold text-lg mb-2">Unable to load leaderboard</p>
+          <p class="text-muted-foreground">Please try refreshing the page</p>
+        </div>
+      `;
+    }
+
+    // Get user ID from common.js
+    function getUserId() {
+      const userData = localStorage.getItem('telegramUser');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          return user.id || 'default';
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+      }
+      return 'default';
+    }
+  </script>
+  <script src="common.js"></script>
+</body>
 </html>
