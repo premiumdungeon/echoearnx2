@@ -2301,7 +2301,6 @@ async function updateWithdrawalHistoryStatus(userId, withdrawalId, status, trans
     }
 }
 
-// ✅ NEW FUNCTION: Send withdrawal failure DM
 // ✅ UPDATED FUNCTION: Send withdrawal success DM (simpler message)
 async function sendWithdrawalSuccessDM(userId, request, paymentResult) {
     try {
@@ -2318,6 +2317,28 @@ async function sendWithdrawalSuccessDM(userId, request, paymentResult) {
         console.log(`✅ Withdrawal success DM sent to user ${userId}`);
     } catch (error) {
         console.error('❌ Failed to send withdrawal success DM:', error);
+    }
+}
+
+// ✅ UPDATED FUNCTION: Send withdrawal failure DM (don't send to user)
+async function sendWithdrawalFailureDM(userId, request, errorMessage) {
+    try {
+        // ✅ FIX: Don't send failure DMs to users - only log for admin
+        console.log(`⚠️ Withdrawal processing delayed for user ${userId}: ${errorMessage}`);
+        
+        // Optional: Send a generic "processing" message instead of failure
+        const message = `🔄 *Withdrawal Processing*\n\n` +
+                       `💰 *Amount:* ${request.wkcAmount} WKC\n` +
+                       `📍 *Wallet:* \`${request.wallet}\`\n\n` +
+                       `Your withdrawal is being processed and will be completed shortly.`;
+
+        await bot.sendMessage(userId, message, {
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to send withdrawal processing DM:', error);
     }
 }
 
