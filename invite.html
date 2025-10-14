@@ -2312,37 +2312,39 @@ function updateReferralLink() {
   }
 }
 
-// Copy referral link to clipboard
+// Copy referral link to clipboard - FIXED VERSION
 function copyReferralLink() {
-  const botUsername = 'EchoEARN_robot';
-  const userData = localStorage.getItem('telegramUser');
+  const referralLinkInput = document.getElementById('referral-link');
   
-  if (!userData) {
-    console.error('No user data found');
-    showToast('Error: User data not found', 'error');
-    return;
-  }
-  
-  try {
-    const user = JSON.parse(userData);
-    const referralLink = `https://t.me/${botUsername}?start=${user.id}`;
-    
-    navigator.clipboard.writeText(referralLink).then(() => {
+  // Modern clipboard API approach
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(referralLinkInput.value).then(() => {
       showToast('Referral link copied to clipboard!', 'success');
     }).catch(err => {
-      console.error('Failed to copy: ', err);
-      // Fallback for browsers that don't support clipboard API
-      const tempInput = document.createElement('input');
-      tempInput.value = referralLink;
-      document.body.appendChild(tempInput);
-      tempInput.select();
-      document.execCommand('copy');
-      document.body.removeChild(tempInput);
-      showToast('Referral link copied to clipboard!', 'success');
+      // Fallback to old method if modern API fails
+      fallbackCopy(referralLinkInput);
     });
-  } catch (error) {
-    console.error('Error copying referral link:', error);
-    showToast('Error copying referral link', 'error');
+  } else {
+    // Use fallback for older browsers
+    fallbackCopy(referralLinkInput);
+  }
+}
+
+// Fallback copy method
+function fallbackCopy(inputElement) {
+  inputElement.select();
+  inputElement.setSelectionRange(0, 99999); // For mobile devices
+  
+  try {
+    const successful = document.execCommand('copy');
+    if (successful) {
+      showToast('Referral link copied to clipboard!', 'success');
+    } else {
+      showToast('Failed to copy referral link', 'error');
+    }
+  } catch (err) {
+    console.error('Fallback copy failed: ', err);
+    showToast('Failed to copy referral link', 'error');
   }
 }
 
