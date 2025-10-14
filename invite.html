@@ -2544,6 +2544,10 @@ document.addEventListener('DOMContentLoaded', function() {
       // Initialize referral system
       initializeReferralSystem();
       
+      // Update referral UI
+      updateReferralLink();
+      updateInviteStats();
+      
     } catch (error) {
       console.error('Error parsing user data:', error);
     }
