@@ -1904,12 +1904,119 @@ video {
     Logout
   </button>
 </div>
+     <div class="p-4 bg-black">
+      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showDashboard()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-no-axes-column-increasing text-white">
+         <line x1="12" x2="12" y1="20" y2="10"></line>
+         <line x1="18" x2="18" y1="20" y2="4"></line>
+         <line x1="6" x2="6" y1="20" y2="16"></line>
+        </svg>
+        <span class="text-white text-sm">Dashboard</span>
+       </div>
        <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-green-500 cursor-pointer" onclick="showConfiguration()">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings text-white">
          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
          <circle cx="12" cy="12" r="3"></circle>
         </svg>
         <span class="text-white text-sm">Configuration</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showTasks()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-list text-yellow-200">
+         <rect width="8" height="4" x="8" y="2" rx="1" ry="1"></rect>
+         <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+         <path d="M12 11h4"></path>
+         <path d="M12 16h4"></path>
+         <path d="M8 11h.01"></path>
+         <path d="M8 16h.01"></path>
+        </svg>
+        <span class="text-white text-sm">Tasks</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showUsers()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users text-blue-300">
+         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+         <circle cx="9" cy="7" r="4"></circle>
+         <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span class="text-white text-sm">Users</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showWithdrawals()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-landmark text-yellow-400">
+         <line x1="3" x2="21" y1="22" y2="22"></line>
+         <line x1="6" x2="6" y1="18" y2="11"></line>
+         <line x1="10" x2="10" y1="18" y2="11"></line>
+         <line x1="14" x2="14" y1="18" y2="11"></line>
+         <line x1="18" x2="18" y1="18" y2="11"></line>
+         <polygon points="12 2 20 7 4 7"></polygon>
+        </svg>
+        <span class="text-white text-sm">Withdrawals</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showChannels()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-monitor text-blue-300">
+         <rect width="20" height="14" x="2" y="3" rx="2"></rect>
+         <line x1="8" x2="16" y1="21" y2="21"></line>
+         <line x1="12" x2="12" y1="17" y2="21"></line>
+        </svg>
+        <span class="text-white text-sm">Channels</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showGroups()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users text-blue-500">
+         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+         <circle cx="9" cy="7" r="4"></circle>
+         <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span class="text-white text-sm">Groups</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showSocialTasks()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe text-blue-500">
+         <circle cx="12" cy="12" r="10"></circle>
+         <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+         <path d="M2 12h20"></path>
+        </svg>
+        <span class="text-white text-sm">Social Tasks</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showAds()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-magnet text-red-500">
+         <path d="m6 15-4-4 6.75-6.77a7.79 7.79 0 0 1 11 11L13 22l-4-4 6.39-6.36a2.14 2.14 0 0 0-3-3L6 15"></path>
+         <path d="m5 8 4 4"></path>
+         <path d="m12 15 4 4"></path>
+        </svg>
+        <span class="text-white text-sm">Ads</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showModeration()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield text-gray-400">
+         <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path>
+        </svg>
+        <span class="text-white text-sm">Moderation</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showBroadcast()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-megaphone text-red-500">
+         <path d="m3 11 18-5v12L3 14v-3z"></path>
+         <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+        </svg>
+        <span class="text-white text-sm">Broadcast</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showOnboarding()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-check-big text-green-500">
+         <path d="M21.801 10A10 10 0 1 1 17 3.335"></path>
+         <path d="m9 11 3 3L22 4"></path>
+        </svg>
+        <span class="text-white text-sm">Onboarding</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showReferralAudit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search text-gray-400">
+         <circle cx="11" cy="11" r="8"></circle>
+         <path d="m21 21-4.3-4.3"></path>
+        </svg>
+        <span class="text-white text-sm">Referral Audit</span>
+       </div>
+       <div class="flex flex-col items-center justify-center gap-2 rounded-lg p-4 text-center bg-gray-800 cursor-pointer" onclick="showUserLedger()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book text-orange-400">
+         <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path>
+        </svg>
+        <span class="text-white text-sm">User Ledger</span>
        </div>
       </div>
      </div>
@@ -1932,6 +2039,14 @@ video {
             <label class="text-sm font-medium leading-none">Maximum Claim Amount:</label>
             <input type="number" id="max-claim-amount" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="100">
           </div>
+          <div>
+            <label class="text-sm font-medium leading-none">Bonus Claims per Friends:</label>
+            <input type="number" id="bonus-claims-per-friend" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="1">
+          </div>
+          <div>
+            <label class="text-sm font-medium leading-none">Friends Required for Bonus:</label>
+            <input type="number" id="friends-required-for-bonus" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="5">
+          </div>
           <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 bg-green-500 text-black border border-black hover:bg-green-600 px-4 py-2" onclick="saveClaimsConfig()">
             Save Claims Config
           </button>
@@ -1951,8 +2066,20 @@ video {
             <input type="number" id="max-withdrawal" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="10000">
           </div>
           <div>
+            <label class="text-sm font-medium leading-none">Withdrawal Fee (%):</label>
+            <input type="number" id="withdrawal-fee" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="5">
+          </div>
+          <div>
+            <label class="text-sm font-medium leading-none">Bank Edit Fee (Points):</label>
+            <input type="number" id="bank-edit-fee" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="10">
+          </div>
+          <div>
             <label class="text-sm font-medium leading-none">Min Successful Referrals To Withdraw:</label>
             <input type="number" id="min-referrals-to-withdraw" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="3">
+          </div>
+          <div>
+            <label class="text-sm font-medium leading-none">Currency Symbol:</label>
+            <input type="text" id="currency-symbol" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="$">
           </div>
           <div>
             <label class="text-sm font-medium leading-none">Point Currency Rate (1 point = ?):</label>
@@ -1969,14 +2096,107 @@ video {
         <h2 class="text-xl font-semibold mb-4">Points Configuration</h2>
         <div class="space-y-4 max-w-2xl">
           <div>
+            <label class="text-sm font-medium leading-none">Channel Join Points:</label>
+            <input type="number" id="channel-join-points" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="50">
+          </div>
+          <div>
+            <label class="text-sm font-medium leading-none">Group Join Points:</label>
+            <input type="number" id="group-join-points" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="30">
+          </div>
+          <div>
             <label class="text-sm font-medium leading-none">Friend Invite Points:</label>
             <input type="number" id="friend-invite-points" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="20">
+          </div>
+          <div>
+            <label class="text-sm font-medium leading-none">Daily Task Limit:</label>
+            <input type="number" id="daily-task-limit" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="10">
           </div>
           <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 bg-green-500 text-black border border-black hover:bg-green-600 px-4 py-2" onclick="savePointsConfig()">
             Save Points Config
           </button>
         </div>
       </div>
+      
+      <!-- Support & Payout Configuration -->
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-4">Support & Payout Configuration</h2>
+        <div class="space-y-4 max-w-2xl">
+          <div>
+            <label class="text-sm font-medium leading-none">Support Username:</label>
+            <input type="text" id="support-username" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="@SupportAdmin">
+          </div>
+          
+          <h3 class="text-lg font-medium mt-6">Support Admins (Usernames & Descriptions)</h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 1 Username:</label>
+              <input type="text" id="admin1-username" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="@Admin1">
+            </div>
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 1 Description:</label>
+              <input type="text" id="admin1-description" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" placeholder="e.g. Withdrawal">
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 2 Username:</label>
+              <input type="text" id="admin2-username" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="@Admin2">
+            </div>
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 2 Description:</label>
+              <input type="text" id="admin2-description" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" placeholder="e.g. Tasks">
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 3 Username:</label>
+              <input type="text" id="admin3-username" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="@Admin3">
+            </div>
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 3 Description:</label>
+              <input type="text" id="admin3-description" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" placeholder="e.g. General Support">
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 4 Username:</label>
+              <input type="text" id="admin4-username" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="@Admin4">
+            </div>
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 4 Description:</label>
+              <input type="text" id="admin4-description" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" placeholder="e.g. General Support">
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 5 Username:</label>
+              <input type="text" id="admin5-username" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="@Admin5">
+            </div>
+            <div>
+              <label class="text-sm font-medium leading-none">Admin 5 Description:</label>
+              <input type="text" id="admin5-description" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" placeholder="e.g. General Support">
+            </div>
+          </div>
+          
+          <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 bg-green-500 text-black border border-black hover:bg-green-600 px-4 py-2" onclick="saveSupportConfig()">
+            Save Support Config
+          </button>
+        </div>
+      </div>
+      
+      <!-- App Configuration -->
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-4">App Configuration</h2>
+        <div class="space-y-4 max-w-2xl">
+          <div>
+            <label class="text-sm font-medium leading-none">App Name:</label>
+            <input type="text" id="app-name" class="flex h-9 w-full rounded-md border px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mt-2 bg-gray-800 border-gray-700 text-green-400" value="AdHive">
+          </div>
+          <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 shadow h-9 bg-green-500 text-black border border-black hover:bg-green-600 px-4 py-2" onclick="saveAppConfig()">
+            Save App Config
+          </button>
+        </div>
+      </div>
+      
+      <!-- Ads SDK Configuration -->
+      <!-- In settings.html, in the Monetag Ads section -->
 <div class="mb-8">
     <h2 class="text-xl font-semibold mb-4">Ads Configuration</h2>
     <div class="space-y-4 max-w-2xl">
