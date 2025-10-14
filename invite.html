@@ -2298,16 +2298,23 @@ video {
 
 // Update referral link display
 function updateReferralLink() {
-  const referralLink = generateReferralLink();
-  const referralLinkElement = document.getElementById('referral-link');
-  if (referralLinkElement) {
-    referralLinkElement.textContent = referralLink;
-  }
-}
+      const botUsername = 'EchoEARN_robot';
+      const userData = localStorage.getItem('telegramUser');
+      
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          const referralLink = `https://t.me/${botUsername}?start=${user.id}`;
+          document.getElementById('referral-link').value = referralLink;
+        } catch (error) {
+          console.error('Error generating referral link:', error);
+        }
+      }
+    }
 
 // Copy referral link to clipboard
 function copyReferralLink() {
-  const referralLink = generateReferralLink();
+  const referralLink = `https://t.me/${botUsername}?start=${user.id}`;
   navigator.clipboard.writeText(referralLink).then(() => {
     // Show success message
     showToast('Referral link copied to clipboard!', 'success');
