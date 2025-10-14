@@ -2213,7 +2213,7 @@ video {
          </svg>Save Bsc wallet Details</button>
         <div class="text-center text-sm text-muted-foreground space-y-1 border rounded-lg p-2">
          <p>Bsc wallet can only be added once.</p>
-         <p>To modify: 500 points fee</p>
+         <p>To modify: 25 points fee</p>
         </div>
        </div>
       </div>
@@ -2363,7 +2363,7 @@ async function loadWalletData(userId) {
         const infoDiv = document.querySelector('.text-center.text-sm.text-muted-foreground');
         infoDiv.innerHTML = `
           <p>✅ Wallet details saved</p>
-          <p>To modify: 500 points fee</p>
+          <p>To modify: 25 points fee</p>
         `;
         return true;
       }
@@ -2432,7 +2432,7 @@ async function saveWalletDetails() {
     const infoDiv = document.querySelector('.text-center.text-sm.text-muted-foreground');
     infoDiv.innerHTML = `
       <p>✅ Wallet details saved</p>
-      <p>To modify: 500 points fee</p>
+      <p>To modify: 25 points fee</p>
     `;
     
     alert('✅ BSC wallet details saved successfully!');
@@ -2473,7 +2473,7 @@ function showEditConfirmation() {
         <h3 class="text-lg font-bold mb-4 text-center">Edit Wallet Details</h3>
         <p class="text-sm text-gray-600 mb-4 text-center">
           Do you really want to edit your wallet details?<br>
-          <span class="font-semibold text-red-500">This will cost 500 points.</span>
+          <span class="font-semibold text-red-500">This will cost 25 points.</span>
         </p>
         <div class="flex gap-2">
           <button onclick="proceedWithEdit()" class="flex-1 bg-red-500 text-white py-2 rounded font-semibold">Proceed</button>
@@ -2520,7 +2520,7 @@ function proceedWithEdit() {
   const infoDiv = document.querySelector('.text-center.text-sm.text-muted-foreground');
   infoDiv.innerHTML = `
     <p>✏️ Editing wallet details</p>
-    <p class="text-red-500 font-semibold">500 points will be deducted upon save</p>
+    <p class="text-red-500 font-semibold">25 points will be deducted upon save</p>
   `;
 }
 
@@ -2557,7 +2557,7 @@ async function updateWalletDetailsWithFee() {
   
   // Check user balance via API
   const currentBalance = await getCurrentBalanceFromAPI(user.id);
-  const editFee = 500;
+  const editFee = 25;
   
   console.log('Current balance:', currentBalance);
   
@@ -2621,7 +2621,7 @@ function resetToEditMode() {
   const infoDiv = document.querySelector('.text-center.text-sm.text-muted-foreground');
   infoDiv.innerHTML = `
     <p>✅ Wallet details saved</p>
-    <p>To modify: 500 points fee</p>
+    <p>To modify: 25 points fee</p>
   `;
   
   // Reload the current wallet data to show in fields
