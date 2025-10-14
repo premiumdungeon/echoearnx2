@@ -32,11 +32,24 @@ const botToken = '8488159096:AAHnzzdhE2wrIKCS5OtR2o3K_1Cw3PL38kg';
 const adminId = '5650788149';
 const bot = new TelegramBot(botToken);
 
+// Bot configuration
+const botToken = '8488159096:AAHnzzdhE2wrIKCS5OtR2o3K_1Cw3PL38kg';
+const adminId = '5650788149';
+const bot = new TelegramBot(botToken);
+
+// ✅ ADD THESE LINES FOR AUTHENTICATION
+const ALLOWED_USER_IDS = ['5650788149', '7659022836'];
+const activePasswords = new Map();
+
 // Channel configuration
 const channels = {
   'EchoEarn': '-1002586398527',
   'Tapy': '-1001605359797'
 };
+
+function generateOneTimePassword() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase(); // 8-character random code
+}
 
 // In your index.js - make sure default data uses numbers
 function getDefaultAdsTaskData() {
@@ -1262,9 +1275,12 @@ app.post('/api/user/save-daily-rewards-data', async (req, res) => {
   }
 });
 
+// API endpoint to send password
 app.post('/api/admin/send-password', async (req, res) => {
     try {
         const { userId, password } = req.body;
+        
+        console.log('🔐 Password request received for user:', userId);
         
         if (!userId || !password) {
             return res.status(400).json({ 
@@ -1273,12 +1289,16 @@ app.post('/api/admin/send-password', async (req, res) => {
             });
         }
         
+        // Check if user is authorized
         if (!ALLOWED_USER_IDS.includes(userId)) {
+            console.log('❌ Unauthorized user attempt:', userId);
             return res.status(403).json({ 
                 success: false, 
                 error: 'User not authorized' 
             });
         }
+        
+        console.log('✅ Authorized user, sending password via bot...');
         
         // Send password via bot
         const message = `🔐 *Admin Panel Access Code*\n\n` +
@@ -1289,16 +1309,80 @@ app.post('/api/admin/send-password', async (req, res) => {
         
         await bot.sendMessage(userId, message, { parse_mode: 'Markdown' });
         
+        console.log('✅ Password sent successfully to user:', userId);
+        
         res.json({ 
             success: true, 
             message: 'Password sent successfully' 
         });
         
     } catch (error) {
-        console.error('Error sending password:', error);
+        console.error('❌ Error sending password:', error);
+        
+        // More specific error handling
+        if (error.response && error.response.statusCode === 403) {
+            return res.status(500).json({ 
+                success: false, 
+                error: 'User has blocked the bot or chat not found' 
+            });
+        }
+        
+        if (error.response && error.response.statusCode === 400) {
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Invalid user ID format' 
+            });
+        }
+        
         res.status(500).json({ 
             success: false, 
-            error: 'Failed to send password' 
+            error: 'Failed to send password: ' + error.message 
+        });
+    }
+});
+
+// Debug endpoint to check bot status
+app.get('/api/admin/debug', async (req, res) => {
+    try {
+        const botInfo = await bot.getMe();
+        res.json({
+            success: true,
+            botInfo: botInfo,
+            allowedUsers: ALLOWED_USER_IDS,
+            activePasswords: Array.from(activePasswords.entries())
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: 'Bot error: ' + error.message
+        });
+    }
+});
+
+// Test message endpoint
+app.post('/api/admin/test-message', async (req, res) => {
+    try {
+        const { userId, message } = req.body;
+        
+        if (!userId || !message) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Missing userId or message' 
+            });
+        }
+        
+        await bot.sendMessage(userId, `Test message: ${message}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Test message sent successfully' 
+        });
+        
+    } catch (error) {
+        console.error('Error sending test message:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to send test message: ' + error.message 
         });
     }
 });
