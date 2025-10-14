@@ -2298,37 +2298,52 @@ video {
 
 // Update referral link display
 function updateReferralLink() {
-      const botUsername = 'EchoEARN_robot';
-      const userData = localStorage.getItem('telegramUser');
-      
-      if (userData) {
-        try {
-          const user = JSON.parse(userData);
-          const referralLink = `https://t.me/${botUsername}?start=${user.id}`;
-          document.getElementById('referral-link').value = referralLink;
-        } catch (error) {
-          console.error('Error generating referral link:', error);
-        }
-      }
+  const botUsername = 'EchoEARN_robot';
+  const userData = localStorage.getItem('telegramUser');
+  
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+      const referralLink = `https://t.me/${botUsername}?start=${user.id}`;
+      document.getElementById('referral-link').value = referralLink;
+    } catch (error) {
+      console.error('Error generating referral link:', error);
     }
+  }
+}
 
 // Copy referral link to clipboard
 function copyReferralLink() {
-  const referralLink = `https://t.me/${botUsername}?start=${user.id}`;
-  navigator.clipboard.writeText(referralLink).then(() => {
-    // Show success message
-    showToast('Referral link copied to clipboard!', 'success');
-  }).catch(err => {
-    console.error('Failed to copy: ', err);
-    // Fallback for browsers that don't support clipboard API
-    const tempInput = document.createElement('input');
-    tempInput.value = referralLink;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    document.execCommand('copy');
-    document.body.removeChild(tempInput);
-    showToast('Referral link copied to clipboard!', 'success');
-  });
+  const botUsername = 'EchoEARN_robot';
+  const userData = localStorage.getItem('telegramUser');
+  
+  if (!userData) {
+    console.error('No user data found');
+    showToast('Error: User data not found', 'error');
+    return;
+  }
+  
+  try {
+    const user = JSON.parse(userData);
+    const referralLink = `https://t.me/${botUsername}?start=${user.id}`;
+    
+    navigator.clipboard.writeText(referralLink).then(() => {
+      showToast('Referral link copied to clipboard!', 'success');
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+      // Fallback for browsers that don't support clipboard API
+      const tempInput = document.createElement('input');
+      tempInput.value = referralLink;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      showToast('Referral link copied to clipboard!', 'success');
+    });
+  } catch (error) {
+    console.error('Error copying referral link:', error);
+    showToast('Error copying referral link', 'error');
+  }
 }
 
 // Show toast notification
