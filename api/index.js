@@ -264,6 +264,26 @@ bot.on('message', async (msg) => {
       first_name: msg.from.first_name,
       last_name: msg.from.last_name
     });
+    
+    if (text === '/getcode' && ALLOWED_USER_IDS.includes(userId)) {
+            const password = generateOneTimePassword();
+            const timestamp = Date.now();
+            
+            // Store in active passwords (you might want to use a database in production)
+            activePasswords.set(userId, {
+                password: password,
+                timestamp: timestamp
+            });
+            
+            const message = `🔐 *Admin Panel Access Code*\n\n` +
+                          `👤 User ID: ${userId}\n` +
+                          `🔑 One-Time Password: *${password}*\n\n` +
+                          `⏰ *Expires in 5 minutes*\n\n` +
+                          `💡 Go to your admin panel and use this code to login.`;
+            
+            await bot.sendMessage(userId, message, { parse_mode: 'Markdown' });
+            return;
+        }
 
     // Handle /start command with referral parameter
     if (text.startsWith('/start')) {
@@ -1240,6 +1260,47 @@ app.post('/api/user/save-daily-rewards-data', async (req, res) => {
       error: 'Failed to save daily rewards data: ' + error.message 
     });
   }
+});
+
+app.post('/api/admin/send-password', async (req, res) => {
+    try {
+        const { userId, password } = req.body;
+        
+        if (!userId || !password) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Missing userId or password' 
+            });
+        }
+        
+        if (!ALLOWED_USER_IDS.includes(userId)) {
+            return res.status(403).json({ 
+                success: false, 
+                error: 'User not authorized' 
+            });
+        }
+        
+        // Send password via bot
+        const message = `🔐 *Admin Panel Access Code*\n\n` +
+                      `👤 User ID: ${userId}\n` +
+                      `🔑 One-Time Password: *${password}*\n\n` +
+                      `⏰ *Expires in 5 minutes*\n\n` +
+                      `💡 Use this code to login to your admin panel.`;
+        
+        await bot.sendMessage(userId, message, { parse_mode: 'Markdown' });
+        
+        res.json({ 
+            success: true, 
+            message: 'Password sent successfully' 
+        });
+        
+    } catch (error) {
+        console.error('Error sending password:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to send password' 
+        });
+    }
 });
 
 // Leaderboard API endpoints
