@@ -349,53 +349,48 @@ bot.on('message', async (msg) => {
         
         let referrerId = null;
         
-        if (startParam) {
-  console.log(`🔗 Start parameter detected: ${startParam}`);
-  
-  let referrerId = null;
-  
-  if (startParam.startsWith('ref')) {
-    referrerId = startParam.replace('ref', '');
-  } else if (startParam.match(/^\d+$/)) {
-    referrerId = startParam;
-  }
-  
-  if (referrerId && referrerId !== userId.toString()) {
-    console.log(`🎯 Processing referral: ${referrerId} -> ${userId}`);
-    
-    const user = await getUser(userId.toString());
-    
-    // ✅ STRONG VALIDATION: Check if user already has a referrer
-    if (user && user.referred_by) {
-      console.log(`❌ Referral blocked: User ${userId} already referred by ${user.referred_by}`);
-    } 
-    // ✅ Check if referral already processed
-    else if (user && user.referral_processed) {
-      console.log(`❌ Referral blocked: Already processed for user ${userId}`);
-    }
-    // ✅ Check if user is trying to refer themselves
-    else if (referrerId === userId.toString()) {
-      console.log(`❌ Self-referral blocked: ${userId}`);
-    }
-    // ✅ Process new referral
-    else {
-      const referralSuccess = await processReferralInBot(referrerId, userId.toString());
-      
-      if (referralSuccess) {
-        welcomeMessage += `🎉 <b>You joined via referral! Your friend earned bonus points.</b>\n\n`;
+        if (startParam.startsWith('ref')) {
+          referrerId = startParam.replace('ref', '');
+        } else if (startParam.match(/^\d+$/)) {
+          referrerId = startParam;
+        }
         
-        await saveUser(userId.toString(), {
-          referred_by: referrerId,
-          referral_processed: true,
-          referral_processed_at: new Date().toISOString(),
-          joined_via: 'referral'
-        });
-        
-        console.log(`✅ New referral processed: ${referrerId} -> ${userId}`);
+        if (referrerId && referrerId !== userId.toString()) {
+          console.log(`🎯 Processing referral: ${referrerId} -> ${userId}`);
+          
+          const user = await getUser(userId.toString());
+          
+          // ✅ STRONG VALIDATION: Check if user already has a referrer
+          if (user && user.referred_by) {
+            console.log(`❌ Referral blocked: User ${userId} already referred by ${user.referred_by}`);
+          } 
+          // ✅ Check if referral already processed
+          else if (user && user.referral_processed) {
+            console.log(`❌ Referral blocked: Already processed for user ${userId}`);
+          }
+          // ✅ Check if user is trying to refer themselves
+          else if (referrerId === userId.toString()) {
+            console.log(`❌ Self-referral blocked: ${userId}`);
+          }
+          // ✅ Process new referral
+          else {
+            const referralSuccess = await processReferralInBot(referrerId, userId.toString());
+            
+            if (referralSuccess) {
+              welcomeMessage += `🎉 <b>You joined via referral! Your friend earned bonus points.</b>\n\n`;
+              
+              await saveUser(userId.toString(), {
+                referred_by: referrerId,
+                referral_processed: true,
+                referral_processed_at: new Date().toISOString(),
+                joined_via: 'referral'
+              });
+              
+              console.log(`✅ New referral processed: ${referrerId} -> ${userId}`);
+            }
+          }
+        }
       }
-    }
-  }
-}
       
       welcomeMessage += `📱 <b>Click the button below to start earning!</b>`;
       
