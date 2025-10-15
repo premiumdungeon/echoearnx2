@@ -5,12 +5,14 @@
   "main": "api/index.js",
   "scripts": {
     "start": "node api/index.js",
-    "dev": "nodemon api/index.js"
+    "dev": "nodemon api/index.js",
+    "migrate": "node migration-script.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
-    "node-telegram-bot-api": "^0.64.0"
+    "node-telegram-bot-api": "^0.64.0",
+    "@supabase/supabase-js": "^2.38.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

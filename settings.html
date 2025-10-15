@@ -2775,7 +2775,7 @@ async function saveChannelTask() {
     
     try {
         // Save task to Firestore
-        const saveResult = await saveTaskToFirestore(task);
+        const saveResult = await saveTaskToDatabase(task);
         
         // Send notification to all users
         const notificationResult = await sendTaskNotification(task);
@@ -2821,7 +2821,7 @@ async function saveGroupTask() {
     
     try {
         // Save task to Firestore
-        const saveResult = await saveTaskToFirestore(task);
+        const saveResult = await saveTaskToDatabase(task);
         
         // Send notification to all users
         const notificationResult = await sendTaskNotification(task);
@@ -2864,7 +2864,7 @@ async function saveWhatsAppTask() {
     }
     
     try {
-        const saveResult = await saveTaskToFirestore(task);
+        const saveResult = await saveTaskToDatabase(task);
         const notificationResult = await sendTaskNotification(task);
         
         if (saveResult.success && notificationResult.success) {
@@ -2905,7 +2905,7 @@ async function saveTikTokTask() {
     }
     
     try {
-        const saveResult = await saveTaskToFirestore(task);
+        const saveResult = await saveTaskToDatabase(task);
         const notificationResult = await sendTaskNotification(task);
         
         if (saveResult.success && notificationResult.success) {
@@ -2946,7 +2946,7 @@ async function saveTwitterTask() {
     }
     
     try {
-        const saveResult = await saveTaskToFirestore(task);
+        const saveResult = await saveTaskToDatabase(task);
         const notificationResult = await sendTaskNotification(task);
         
         if (saveResult.success && notificationResult.success) {
@@ -2966,7 +2966,7 @@ async function saveTwitterTask() {
 }
 
 // Save task to Firestore
-async function saveTaskToFirestore(task) {
+async function saveTaskToDatabase(task) {
     try {
         const response = await fetch('/api/tasks/save', {
             method: 'POST',
@@ -3009,7 +3009,7 @@ async function sendTaskNotification(task) {
 }
 
 // Load tasks from Firestore
-async function loadTasksFromFirestore(type = null) {
+async function loadTasksFromDatabase(type = null) {
     try {
         const url = type ? `/api/tasks/get?type=${type}` : '/api/tasks/get';
         const response = await fetch(url);
@@ -3075,7 +3075,7 @@ async function loadWithdrawalRequests() {
 }
 
 async function loadChannelTasks() {
-    const channelTasks = await loadTasksFromFirestore('channel');
+    const channelTasks = await loadTasksFromDatabase('channel');
     const container = document.getElementById('saved-channel-tasks');
     
     container.innerHTML = channelTasks.map(task => `
@@ -3103,7 +3103,7 @@ async function loadChannelTasks() {
 }
 
 async function loadGroupTasks() {
-    const groupTasks = await loadTasksFromFirestore('group');
+    const groupTasks = await loadTasksFromDatabase('group');
     const container = document.getElementById('saved-group-tasks');
     
     container.innerHTML = groupTasks.map(task => `
@@ -3127,7 +3127,7 @@ async function loadGroupTasks() {
 }
 
 async function loadWhatsAppTasks() {
-    const whatsappTasks = await loadTasksFromFirestore('whatsapp');
+    const whatsappTasks = await loadTasksFromDatabase('whatsapp');
     const container = document.getElementById('saved-whatsapp-tasks');
     
     container.innerHTML = whatsappTasks.map(task => `
@@ -3154,7 +3154,7 @@ async function loadWhatsAppTasks() {
 }
 
 async function loadTikTokTasks() {
-    const tiktokTasks = await loadTasksFromFirestore('tiktok');
+    const tiktokTasks = await loadTasksFromDatabase('tiktok');
     const container = document.getElementById('saved-tiktok-tasks');
     
     container.innerHTML = tiktokTasks.map(task => `
@@ -3181,7 +3181,7 @@ async function loadTikTokTasks() {
 }
 
 async function loadTwitterTasks() {
-    const twitterTasks = await loadTasksFromFirestore('twitter');
+    const twitterTasks = await loadTasksFromDatabase('twitter');
     const container = document.getElementById('saved-twitter-tasks');
     
     container.innerHTML = twitterTasks.map(task => `
