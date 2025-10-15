@@ -359,21 +359,13 @@ bot.on('message', async (msg) => {
           console.log(`🎯 Processing referral: ${referrerId} -> ${userId}`);
           
           const user = await getUser(userId.toString());
-          
-          // ✅ STRONG VALIDATION: Check if user already has a referrer
+          let alreadyProcessed = false;
           if (user && user.referred_by) {
-            console.log(`❌ Referral blocked: User ${userId} already referred by ${user.referred_by}`);
-          } 
-          // ✅ Check if referral already processed
-          else if (user && user.referral_processed) {
-            console.log(`❌ Referral blocked: Already processed for user ${userId}`);
+            alreadyProcessed = true;
+            console.log('❌ Referral already processed for this user');
           }
-          // ✅ Check if user is trying to refer themselves
-          else if (referrerId === userId.toString()) {
-            console.log(`❌ Self-referral blocked: ${userId}`);
-          }
-          // ✅ Process new referral
-          else {
+          
+          if (!alreadyProcessed) {
             const referralSuccess = await processReferralInBot(referrerId, userId.toString());
             
             if (referralSuccess) {
@@ -382,11 +374,8 @@ bot.on('message', async (msg) => {
               await saveUser(userId.toString(), {
                 referred_by: referrerId,
                 referral_processed: true,
-                referral_processed_at: new Date().toISOString(),
                 joined_via: 'referral'
               });
-              
-              console.log(`✅ New referral processed: ${referrerId} -> ${userId}`);
             }
           }
         }
@@ -434,43 +423,6 @@ async function processReferralInBot(referrerId, referredUserId) {
   try {
     console.log(`💰 Processing referral in bot: ${referrerId} referred ${referredUserId}`);
     
-    // ✅ PREVENT SELF-REFERRAL
-    if (referrerId === referredUserId) {
-      console.log('❌ Self-referral blocked');
-      return false;
-    }
-    
-    // ✅ CHECK IF REFERRAL ALREADY PROCESSED FOR THIS USER
-    const referredUser = await getUser(referredUserId.toString());
-    if (referredUser && referredUser.referred_by) {
-      console.log('❌ User already has a referrer:', referredUser.referred_by);
-      return false;
-    }
-    
-    // ✅ CHECK IF THIS SPECIFIC REFERRAL WAS ALREADY PROCESSED
-    if (referredUser && referredUser.referral_processed) {
-      console.log('❌ Referral already processed for this user');
-      return false;
-    }
-    
-    // ✅ CHECK IF REFERRER EXISTS
-    const referrer = await getUser(referrerId.toString());
-    if (!referrer) {
-      console.log('❌ Referrer not found in database');
-      return false;
-    }
-    
-    // ✅ CHECK FOR DUPLICATE IN REFERRAL HISTORY
-    const referralHistory = referrer.referral_history || [];
-    const alreadyReferred = referralHistory.some(ref => 
-      ref.referredUserId === referredUserId.toString()
-    );
-    
-    if (alreadyReferred) {
-      console.log('❌ This user was already referred by this referrer');
-      return false;
-    }
-    
     // Get referral configuration
     const { data: config, error: configError } = await supabase
       .from('configurations')
@@ -481,7 +433,14 @@ async function processReferralInBot(referrerId, referredUserId) {
     const pointsConfig = config ? config.config : {};
     const referralBonus = parseInt(pointsConfig.friendInvitePoints) || 20;
     
-    // ✅ ADD REFERRAL BONUS
+    // Get referrer data
+    const referrer = await getUser(referrerId.toString());
+    if (!referrer) {
+      console.log('❌ Referrer not found in database');
+      return false;
+    }
+    
+    // Add referral bonus
     await updateUserBalance(referrerId, referralBonus, {
       type: 'referral_bonus',
       amount: referralBonus,
@@ -490,12 +449,12 @@ async function processReferralInBot(referrerId, referredUserId) {
       timestamp: new Date().toISOString()
     });
     
-    // ✅ UPDATE REFERRAL COUNT
+    // Update referral count
     const currentReferrals = referrer.referral_count || 0;
     await saveUser(referrerId.toString(), {
       referral_count: currentReferrals + 1,
       referral_history: [
-        ...referralHistory,
+        ...(referrer.referral_history || []),
         {
           referredUserId: referredUserId,
           bonusAmount: referralBonus,
@@ -506,7 +465,7 @@ async function processReferralInBot(referrerId, referredUserId) {
     
     console.log(`✅ Referral processed in bot: ${referrerId} earned ${referralBonus} points`);
     
-    // ✅ SEND DM NOTIFICATION TO REFERRER
+    // Send DM notification to referrer
     try {
       await bot.sendMessage(
         referrerId, 
@@ -2746,7 +2705,6 @@ app.post('/api/telegram/start', async (req, res) => {
 });
 
 // Fix the referral processing endpoint
-// Fix the referral processing endpoint
 app.post('/api/user/process-referral', async (req, res) => {
   try {
     const { referrerId, referredUserId } = req.body;
@@ -2760,42 +2718,6 @@ app.post('/api/user/process-referral', async (req, res) => {
     
     console.log(`🎯 Processing referral: ${referrerId} referred ${referredUserId}`);
     
-    // ✅ ALL THE SAME VALIDATION CHECKS
-    if (referrerId === referredUserId) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Self-referral not allowed' 
-      });
-    }
-    
-    const referredUser = await getUser(referredUserId.toString());
-    if (referredUser && referredUser.referred_by) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'User already has a referrer' 
-      });
-    }
-    
-    const referrer = await getUser(referrerId.toString());
-    if (!referrer) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Referrer not found' 
-      });
-    }
-    
-    const referralHistory = referrer.referral_history || [];
-    const alreadyReferred = referralHistory.some(ref => 
-      ref.referredUserId === referredUserId.toString()
-    );
-    
-    if (alreadyReferred) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'This user was already referred by you' 
-      });
-    }
-    
     const { data: config, error: configError } = await supabase
       .from('configurations')
       .select('config')
@@ -2805,7 +2727,15 @@ app.post('/api/user/process-referral', async (req, res) => {
     const pointsConfig = config ? config.config : {};
     const referralBonus = parseInt(pointsConfig.friendInvitePoints) || 20;
     
-    // ✅ ADD REFERRAL BONUS
+    const referrer = await getUser(referrerId.toString());
+    
+    if (!referrer) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Referrer not found' 
+      });
+    }
+    
     await updateUserBalance(referrerId, referralBonus, {
       type: 'referral_bonus',
       amount: referralBonus,
@@ -2814,12 +2744,11 @@ app.post('/api/user/process-referral', async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
-    // ✅ UPDATE REFERRAL COUNT
     const currentReferrals = referrer.referral_count || 0;
     await saveUser(referrerId.toString(), {
       referral_count: currentReferrals + 1,
       referral_history: [
-        ...referralHistory,
+        ...(referrer.referral_history || []),
         {
           referredUserId: referredUserId,
           bonusAmount: referralBonus,
@@ -2852,58 +2781,6 @@ app.post('/api/user/process-referral', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: 'Failed to process referral: ' + error.message 
-    });
-  }
-});
-
-// API endpoint to fix duplicate referrals
-app.post('/api/admin/fix-duplicate-referrals', async (req, res) => {
-  try {
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('*')
-      .not('referred_by', 'is', null);
-    
-    if (error) throw error;
-    
-    let fixedCount = 0;
-    
-    for (const user of users) {
-      const referrer = await getUser(user.referred_by);
-      if (referrer) {
-        const referralHistory = referrer.referral_history || [];
-        const userReferred = referralHistory.some(ref => 
-          ref.referredUserId === user.id
-        );
-        
-        if (!userReferred) {
-          // Add missing referral to history
-          await saveUser(user.referred_by, {
-            referral_history: [
-              ...referralHistory,
-              {
-                referredUserId: user.id,
-                bonusAmount: 10, // Default bonus
-                timestamp: user.join_date || new Date().toISOString()
-              }
-            ]
-          });
-          fixedCount++;
-        }
-      }
-    }
-    
-    res.json({
-      success: true,
-      message: `Fixed ${fixedCount} duplicate referrals`,
-      fixedCount: fixedCount
-    });
-    
-  } catch (error) {
-    console.error('Error fixing duplicate referrals:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fix duplicate referrals' 
     });
   }
 });
