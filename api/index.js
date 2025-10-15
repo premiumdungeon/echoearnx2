@@ -1992,6 +1992,247 @@ app.post('/api/tasks/complete', async (req, res) => {
     }
 });
 
+// API endpoint to broadcast text message to all users
+app.post('/api/bot/broadcast', async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing message' 
+      });
+    }
+    
+    console.log('📢 Starting broadcast to all users...');
+    
+    // Get all users from Supabase
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id');
+    
+    if (error) throw error;
+    
+    const userCount = users.length;
+    let sentCount = 0;
+    let failedCount = 0;
+    
+    console.log(`📢 Broadcasting to ${userCount} users...`);
+    
+    // Send message to each user
+    for (const user of users) {
+      try {
+        await bot.sendMessage(user.id, message, {
+          parse_mode: 'Markdown',
+          disable_web_page_preview: true
+        });
+        sentCount++;
+        console.log(`✅ Message sent to user ${user.id}`);
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(`❌ Failed to send to user ${user.id}:`, error.message);
+        failedCount++;
+      }
+    }
+    
+    console.log(`📊 Broadcast summary: ${sentCount} sent, ${failedCount} failed`);
+    
+    // Send summary to admin
+    await bot.sendMessage(
+      adminId, 
+      `📢 Broadcast Completed!\n\n` +
+      `📝 Message: ${message.substring(0, 50)}...\n` +
+      `📊 Results: ${sentCount} sent, ${failedCount} failed\n` +
+      `👥 Total users: ${userCount}`
+    );
+    
+    res.json({
+      success: true,
+      message: `Broadcast completed: ${sentCount} sent, ${failedCount} failed`,
+      stats: {
+        totalUsers: userCount,
+        sent: sentCount,
+        failed: failedCount
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error in broadcast:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to broadcast message',
+      error: error.message
+    });
+  }
+});
+
+// API endpoint to broadcast photo with caption
+app.post('/api/bot/broadcast-photo', async (req, res) => {
+  try {
+    const { photoUrl, caption } = req.body;
+    
+    if (!photoUrl) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing photoUrl' 
+      });
+    }
+    
+    console.log('📷 Starting photo broadcast...');
+    
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id');
+    
+    if (error) throw error;
+    
+    const userCount = users.length;
+    let sentCount = 0;
+    let failedCount = 0;
+    
+    for (const user of users) {
+      try {
+        await bot.sendPhoto(user.id, photoUrl, {
+          caption: caption,
+          parse_mode: 'Markdown'
+        });
+        sentCount++;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(`❌ Failed to send photo to user ${user.id}:`, error.message);
+        failedCount++;
+      }
+    }
+    
+    console.log(`📊 Photo broadcast: ${sentCount} sent, ${failedCount} failed`);
+    
+    res.json({
+      success: true,
+      message: `Photo broadcast completed: ${sentCount} sent, ${failedCount} failed`,
+      stats: { totalUsers: userCount, sent: sentCount, failed: failedCount }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error in photo broadcast:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to broadcast photo',
+      error: error.message
+    });
+  }
+});
+
+// API endpoint to broadcast video with caption
+app.post('/api/bot/broadcast-video', async (req, res) => {
+  try {
+    const { videoUrl, caption } = req.body;
+    
+    if (!videoUrl) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing videoUrl' 
+      });
+    }
+    
+    console.log('🎥 Starting video broadcast...');
+    
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id');
+    
+    if (error) throw error;
+    
+    const userCount = users.length;
+    let sentCount = 0;
+    let failedCount = 0;
+    
+    for (const user of users) {
+      try {
+        await bot.sendVideo(user.id, videoUrl, {
+          caption: caption,
+          parse_mode: 'Markdown'
+        });
+        sentCount++;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(`❌ Failed to send video to user ${user.id}:`, error.message);
+        failedCount++;
+      }
+    }
+    
+    console.log(`📊 Video broadcast: ${sentCount} sent, ${failedCount} failed`);
+    
+    res.json({
+      success: true,
+      message: `Video broadcast completed: ${sentCount} sent, ${failedCount} failed`,
+      stats: { totalUsers: userCount, sent: sentCount, failed: failedCount }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error in video broadcast:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to broadcast video',
+      error: error.message
+    });
+  }
+});
+
+// API endpoint to forward message from a source chat
+app.post('/api/bot/broadcast-forward', async (req, res) => {
+  try {
+    const { fromChatId, messageId } = req.body;
+    
+    if (!fromChatId || !messageId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing fromChatId or messageId' 
+      });
+    }
+    
+    console.log('🔄 Starting forward broadcast...');
+    
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id');
+    
+    if (error) throw error;
+    
+    const userCount = users.length;
+    let sentCount = 0;
+    let failedCount = 0;
+    
+    for (const user of users) {
+      try {
+        await bot.forwardMessage(user.id, fromChatId, messageId);
+        sentCount++;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error(`❌ Failed to forward to user ${user.id}:`, error.message);
+        failedCount++;
+      }
+    }
+    
+    console.log(`📊 Forward broadcast: ${sentCount} sent, ${failedCount} failed`);
+    
+    res.json({
+      success: true,
+      message: `Forward broadcast completed: ${sentCount} sent, ${failedCount} failed`,
+      stats: { totalUsers: userCount, sent: sentCount, failed: failedCount }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error in forward broadcast:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to broadcast forward',
+      error: error.message
+    });
+  }
+});
+
 // Fix the backend endpoint for social task submission
 app.post('/api/tasks/submit-social', async (req, res) => {
     try {
