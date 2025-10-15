@@ -3,23 +3,16 @@ const cors = require('cors');
 const TelegramBot = require('node-telegram-bot-api');
 const path = require('path');
 const fs = require('fs');
-const admin = require('firebase-admin');
+const { createClient } = require('@supabase/supabase-js');
+
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Initialize Firebase Admin
-const serviceAccount = require('./serviceAccountKey.json'); // You'll need to create this file
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
-const db = admin.firestore();
-const tasksCollection = db.collection('tasks');
-const configCollection = db.collection('configurations');
-const withdrawalsCollection = db.collection('withdrawals');
-const completionLocks = new Map();
-
+// Initialize Supabase
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
 // Middleware
 app.use(cors());
@@ -35,6 +28,7 @@ const bot = new TelegramBot(botToken);
 // ✅ ADD THESE LINES FOR AUTHENTICATION
 const ALLOWED_USER_IDS = ['5650788149', '7659022836'];
 const activePasswords = new Map();
+const completionLocks = new Map();
 
 // Channel configuration
 const channels = {
@@ -43,77 +37,92 @@ const channels = {
 };
 
 function generateOneTimePassword() {
-    return Math.random().toString(36).substring(2, 10).toUpperCase(); // 8-character random code
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
-// In your index.js - make sure default data uses numbers
-function getDefaultAdsTaskData() {
-  return {
-    lastAdDate: '',
-    adsToday: 0,        // Number
-    lastAdHour: -1,     // Number  
-    adsThisHour: 0,     // Number
-    lifetimeAds: 0,     // Number
-    totalEarnings: 0,   // Number
-    history: []
-  };
-}
-
-// Firestore Helper functions for user data management
+// Helper functions for Supabase
 async function loadUsers() {
   try {
-    const usersSnapshot = await db.collection('users').get();
-    const users = {};
-    usersSnapshot.forEach(doc => {
-      users[doc.id] = doc.data();
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*');
+    
+    if (error) throw error;
+    
+    const usersMap = {};
+    users.forEach(user => {
+      usersMap[user.id] = user;
     });
-    return users;
+    return usersMap;
   } catch (error) {
-    console.error('Error loading user data from Firestore:', error);
+    console.error('Error loading user data from Supabase:', error);
     return {};
   }
 }
 
 async function saveUser(userId, userData) {
   try {
-    await db.collection('users').doc(userId.toString()).set(userData, { merge: true });
+    const { data, error } = await supabase
+      .from('users')
+      .upsert({
+        id: userId.toString(),
+        ...userData,
+        updated_at: new Date().toISOString()
+      });
+    
+    if (error) throw error;
     return true;
   } catch (error) {
-    console.error('Error saving user to Firestore:', error);
+    console.error('Error saving user to Supabase:', error);
     return false;
   }
 }
 
 async function addUser(userId, userData = {}) {
   try {
-    const userRef = db.collection('users').doc(userId.toString());
-    const userDoc = await userRef.get();
+    // Check if user exists
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId.toString())
+      .single();
     
-    if (!userDoc.exists) {
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows
+      throw fetchError;
+    }
+    
+    if (!existingUser) {
       // Create new user
       const newUser = {
-        id: userId,
+        id: userId.toString(),
         username: userData.username || '',
         first_name: userData.first_name || '',
         last_name: userData.last_name || '',
         verified: true,
-        join_date: admin.firestore.FieldValue.serverTimestamp(),
-        last_verified: admin.firestore.FieldValue.serverTimestamp(),
-        last_activity: admin.firestore.FieldValue.serverTimestamp(),
+        join_date: new Date().toISOString(),
+        last_verified: new Date().toISOString(),
+        last_activity: new Date().toISOString(),
         balance: 0,
         transactions: [],
-        processedEvents: []
+        processed_events: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       
-      await userRef.set(newUser);
-      console.log(`✅ New user added to Firestore: ${userId}`);
+      const { error } = await supabase
+        .from('users')
+        .insert([newUser]);
+      
+      if (error) throw error;
+      console.log(`✅ New user added to Supabase: ${userId}`);
       return true;
     } else {
       // Update existing user
       const updateData = {
         verified: true,
-        last_verified: admin.firestore.FieldValue.serverTimestamp(),
-        last_activity: admin.firestore.FieldValue.serverTimestamp()
+        last_verified: new Date().toISOString(),
+        last_activity: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       
       // Update user info if provided
@@ -121,31 +130,52 @@ async function addUser(userId, userData = {}) {
       if (userData.first_name) updateData.first_name = userData.first_name;
       if (userData.last_name) updateData.last_name = userData.last_name;
       
-      await userRef.update(updateData);
+      const { error } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', userId.toString());
+      
+      if (error) throw error;
       return true;
     }
   } catch (error) {
-    console.error('Error adding/updating user in Firestore:', error);
+    console.error('Error adding/updating user in Supabase:', error);
     return false;
   }
 }
 
 async function getUser(userId) {
   try {
-    const userDoc = await db.collection('users').doc(userId.toString()).get();
-    return userDoc.exists ? userDoc.data() : null;
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId.toString())
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null; // No user found
+      throw error;
+    }
+    
+    return user;
   } catch (error) {
-    console.error('Error getting user from Firestore:', error);
+    console.error('Error getting user from Supabase:', error);
     return null;
   }
 }
 
 async function updateUserVerification(userId, status) {
   try {
-    await db.collection('users').doc(userId.toString()).update({
-      verified: status,
-      last_verified: admin.firestore.FieldValue.serverTimestamp()
-    });
+    const { error } = await supabase
+      .from('users')
+      .update({
+        verified: status,
+        last_verified: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId.toString());
+    
+    if (error) throw error;
     return true;
   } catch (error) {
     console.error('Error updating user verification:', error);
@@ -153,7 +183,68 @@ async function updateUserVerification(userId, status) {
   }
 }
 
-// Add this to your withdrawal creation endpoint or function
+async function updateUserBalance(userId, amount, transactionData = null) {
+  try {
+    console.log(`💰 Updating balance for user ${userId}: +${amount} points`);
+    
+    // First get current balance
+    const user = await getUser(userId.toString());
+    const currentBalance = user ? user.balance : 0;
+    
+    console.log(`📊 Current balance: ${currentBalance}, Adding: ${amount}`);
+    
+    if (transactionData) {
+      // Create transaction data
+      const transaction = {
+        ...transactionData,
+        timestamp: new Date().toISOString(),
+        balanceBefore: currentBalance,
+        balanceAfter: currentBalance + amount
+      };
+      
+      console.log('📝 Transaction data:', transaction);
+      
+      // Update balance and add transaction
+      const { error } = await supabase
+        .from('users')
+        .update({
+          balance: currentBalance + amount,
+          transactions: [...(user.transactions || []), transaction],
+          last_activity: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId.toString());
+      
+      if (error) throw error;
+    } else {
+      // Just update balance
+      const { error } = await supabase
+        .from('users')
+        .update({
+          balance: currentBalance + amount,
+          last_activity: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId.toString());
+      
+      if (error) throw error;
+    }
+    
+    // Verify the update worked
+    const updatedUser = await getUser(userId.toString());
+    const newBalance = updatedUser ? updatedUser.balance : 0;
+    
+    console.log(`✅ Balance update successful! New balance: ${newBalance}`);
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Error updating user balance:', error);
+    console.error('Error details:', error.message);
+    return false;
+  }
+}
+
+// Withdrawal DM function
 async function sendWithdrawalRequestDM(userId, amount, wkcAmount) {
     try {
         const message = `📥 *Withdrawal Request Received*\n\n` +
@@ -171,63 +262,6 @@ async function sendWithdrawalRequestDM(userId, amount, wkcAmount) {
     } catch (error) {
         console.error('❌ Failed to send withdrawal request DM:', error);
     }
-}
-
-// Fix the updateUserBalance function with better error handling
-async function updateUserBalance(userId, amount, transactionData = null) {
-  try {
-    console.log(`💰 Updating balance for user ${userId}: +${amount} points`);
-    
-    const userRef = db.collection('users').doc(userId.toString());
-    
-    // First, get the current user data to see the current balance
-    const userDoc = await userRef.get();
-    const currentBalance = userDoc.exists ? (userDoc.data().balance || 0) : 0;
-    
-    console.log(`📊 Current balance: ${currentBalance}, Adding: ${amount}`);
-    
-    if (transactionData) {
-      // Create transaction data
-      const transaction = {
-        ...transactionData,
-        timestamp: new Date().toISOString(),
-        balanceBefore: currentBalance,
-        balanceAfter: currentBalance + amount
-      };
-      
-      console.log('📝 Transaction data:', transaction);
-      
-      // Update balance and transactions in separate operations to avoid timestamp issues
-      await userRef.update({
-        balance: admin.firestore.FieldValue.increment(amount),
-        last_activity: admin.firestore.FieldValue.serverTimestamp()
-      });
-      
-      // Add transaction to array
-      await userRef.update({
-        transactions: admin.firestore.FieldValue.arrayUnion(transaction)
-      });
-      
-    } else {
-      // Just update balance
-      await userRef.update({
-        balance: admin.firestore.FieldValue.increment(amount),
-        last_activity: admin.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    
-    // Verify the update worked
-    const updatedDoc = await userRef.get();
-    const newBalance = updatedDoc.data().balance || 0;
-    
-    console.log(`✅ Balance update successful! New balance: ${newBalance}`);
-    
-    return true;
-  } catch (error) {
-    console.error('❌ Error updating user balance:', error);
-    console.error('Error details:', error.message);
-    return false;
-  }
 }
 
 // Set webhook route
@@ -273,53 +307,48 @@ bot.on('message', async (msg) => {
       last_name: msg.from.last_name
     });
     
-    // ✅ CORRECTED CODE:
-if (text === '/getcode') {
-    console.log(`🔐 /getcode command received from user: ${userId}`);
-    
-    // Convert userId to string for comparison with ALLOWED_USER_IDS array
-    const userIdStr = userId.toString();
-    
-    if (ALLOWED_USER_IDS.includes(userIdStr)) {
-        const password = generateOneTimePassword();
-        const timestamp = Date.now();
+    if (text === '/getcode') {
+        console.log(`🔐 /getcode command received from user: ${userId}`);
         
-        // Store in active passwords
-        activePasswords.set(userIdStr, {
-            password: password,
-            timestamp: timestamp
-        });
+        const userIdStr = userId.toString();
         
-        const message = `🔐 *Admin Panel Access Code*\n\n` +
-                      `👤 User ID: ${userIdStr}\n` +
-                      `🔑 One-Time Password: *${password}*\n\n` +
-                      `⏰ *Expires in 5 minutes*\n\n` +
-                      `💡 Go to your admin panel and use this code to login.`;
-        
-        await bot.sendMessage(userId, message, { parse_mode: 'Markdown' });
-        console.log(`✅ Password sent to user ${userIdStr}: ${password}`);
-    } else {
-        console.log(`❌ Unauthorized /getcode attempt from user: ${userIdStr}`);
-        await bot.sendMessage(userId, "❌ Access denied. You are not authorized to use this command.");
+        if (ALLOWED_USER_IDS.includes(userIdStr)) {
+            const password = generateOneTimePassword();
+            const timestamp = Date.now();
+            
+            activePasswords.set(userIdStr, {
+                password: password,
+                timestamp: timestamp
+            });
+            
+            const message = `🔐 *Admin Panel Access Code*\n\n` +
+                          `👤 User ID: ${userIdStr}\n` +
+                          `🔑 One-Time Password: *${password}*\n\n` +
+                          `⏰ *Expires in 5 minutes*\n\n` +
+                          `💡 Go to your admin panel and use this code to login.`;
+            
+            await bot.sendMessage(userId, message, { parse_mode: 'Markdown' });
+            console.log(`✅ Password sent to user ${userIdStr}: ${password}`);
+        } else {
+            console.log(`❌ Unauthorized /getcode attempt from user: ${userIdStr}`);
+            await bot.sendMessage(userId, "❌ Access denied. You are not authorized to use this command.");
+        }
+        return;
     }
-    return;
-}
 
     // Handle /start command with referral parameter
     if (text.startsWith('/start')) {
-      const startParam = text.split(' ')[1]; // Get referral parameter
+      const startParam = text.split(' ')[1];
       
       let welcomeMessage = `👋 Welcome to EchoEARN Bot!\n\n`;
       welcomeMessage += `🎯 <b>Earn points by completing simple tasks</b>\n`;
       welcomeMessage += `💰 <b>Withdraw your earnings easily</b>\n\n`;
       
-      // ✅ PROCESS REFERRAL IMMEDIATELY
       if (startParam) {
         console.log(`🔗 Start parameter detected: ${startParam}`);
         
         let referrerId = null;
         
-        // Parse referral parameter
         if (startParam.startsWith('ref')) {
           referrerId = startParam.replace('ref', '');
         } else if (startParam.match(/^\d+$/)) {
@@ -329,32 +358,24 @@ if (text === '/getcode') {
         if (referrerId && referrerId !== userId.toString()) {
           console.log(`🎯 Processing referral: ${referrerId} -> ${userId}`);
           
-          // Check if referral already processed
-          const userRef = db.collection('users').doc(userId.toString());
-          const userDoc = await userRef.get();
-          
+          const user = await getUser(userId.toString());
           let alreadyProcessed = false;
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            if (userData.referredBy) {
-              alreadyProcessed = true;
-              console.log('❌ Referral already processed for this user');
-            }
+          if (user && user.referred_by) {
+            alreadyProcessed = true;
+            console.log('❌ Referral already processed for this user');
           }
           
           if (!alreadyProcessed) {
-            // Process referral bonus
             const referralSuccess = await processReferralInBot(referrerId, userId.toString());
             
             if (referralSuccess) {
               welcomeMessage += `🎉 <b>You joined via referral! Your friend earned bonus points.</b>\n\n`;
               
-              // Mark user as referred
-              await userRef.set({
-                referredBy: referrerId,
-                referralProcessed: true,
-                joinedVia: 'referral'
-              }, { merge: true });
+              await saveUser(userId.toString(), {
+                referred_by: referrerId,
+                referral_processed: true,
+                joined_via: 'referral'
+              });
             }
           }
         }
@@ -377,7 +398,6 @@ if (text === '/getcode') {
       });
     }
 
-    // Handle web app data (existing code)
     if (msg.web_app_data) {
       try {
         const data = JSON.parse(msg.web_app_data.data);
@@ -398,21 +418,24 @@ if (text === '/getcode') {
   }
 });
 
-// ✅ NEW FUNCTION: Process referral directly in bot
+// Process referral function
 async function processReferralInBot(referrerId, referredUserId) {
   try {
     console.log(`💰 Processing referral in bot: ${referrerId} referred ${referredUserId}`);
     
     // Get referral configuration
-    const configDoc = await configCollection.doc('points').get();
-    const pointsConfig = configDoc.exists ? configDoc.data() : {};
+    const { data: config, error: configError } = await supabase
+      .from('configurations')
+      .select('config')
+      .eq('id', 'points')
+      .single();
+    
+    const pointsConfig = config ? config.config : {};
     const referralBonus = parseInt(pointsConfig.friendInvitePoints) || 20;
     
-    // Update referrer's balance and referral count
-    const referrerRef = db.collection('users').doc(referrerId.toString());
-    const referrerDoc = await referrerRef.get();
-    
-    if (!referrerDoc.exists) {
+    // Get referrer data
+    const referrer = await getUser(referrerId.toString());
+    if (!referrer) {
       console.log('❌ Referrer not found in database');
       return false;
     }
@@ -427,21 +450,17 @@ async function processReferralInBot(referrerId, referredUserId) {
     });
     
     // Update referral count
-    const currentReferrals = referrerDoc.data().referral_count || 0;
-    await referrerRef.update({
+    const currentReferrals = referrer.referral_count || 0;
+    await saveUser(referrerId.toString(), {
       referral_count: currentReferrals + 1,
-      last_activity: admin.firestore.FieldValue.serverTimestamp()
-    });
-    
-    // Add to referral history
-    const referralEntry = {
-      referredUserId: referredUserId,
-      bonusAmount: referralBonus,
-      timestamp: new Date().toISOString()
-    };
-    
-    await referrerRef.update({
-      referral_history: admin.firestore.FieldValue.arrayUnion(referralEntry)
+      referral_history: [
+        ...(referrer.referral_history || []),
+        {
+          referredUserId: referredUserId,
+          bonusAmount: referralBonus,
+          timestamp: new Date().toISOString()
+        }
+      ]
     });
     
     console.log(`✅ Referral processed in bot: ${referrerId} earned ${referralBonus} points`);
@@ -475,13 +494,10 @@ app.get('/api/telegram/check-membership', async (req, res) => {
   }
   
   try {
-    // Parse the channelIds from JSON string
     const channelsArray = JSON.parse(channelIds);
-    
     const membershipStatus = {};
     const numericUserId = parseInt(userId);
 
-    // Add user when they check membership
     await addUser(userId.toString());
 
     for (const channelId of channelsArray) {
@@ -497,19 +513,16 @@ app.get('/api/telegram/check-membership', async (req, res) => {
       }
     }
 
-    // If all channels are joined, mark user as verified
     const allJoined = Object.values(membershipStatus).every(status => status === true);
     if (allJoined) {
       await addUser(userId.toString());
       
-      // Notify admin
       try {
         await bot.sendMessage(adminId, `✅ User ${numericUserId} has successfully joined all channels!`);
       } catch (adminError) {
         console.error('Failed to notify admin:', adminError);
       }
     } else {
-      // Update verification status if user left some channels
       await updateUserVerification(numericUserId.toString(), false);
     }
 
@@ -601,7 +614,6 @@ app.get('/api', async (req, res) => {
             timestamp: new Date().toISOString()
         });
 
-        // Validate required parameters
         if (!telegram_id) {
             return res.status(400).json({ 
                 success: false, 
@@ -609,7 +621,6 @@ app.get('/api', async (req, res) => {
             });
         }
 
-        // Only process 'click' events (as per requirement)
         if (event_type !== 'click') {
             console.log('ℹ️ Ignoring non-click event:', event_type);
             return res.status(200).json({ 
@@ -618,7 +629,6 @@ app.get('/api', async (req, res) => {
             });
         }
 
-        // Only process paid events
         if (reward_event_type !== 'valued') {
             console.log('ℹ️ Ignoring unpaid event:', reward_event_type);
             return res.status(200).json({ 
@@ -627,11 +637,9 @@ app.get('/api', async (req, res) => {
             });
         }
 
-        // Get user data from Firestore
         const numericTelegramId = telegram_id.toString();
         let user = await getUser(numericTelegramId);
         
-        // Add user if they don't exist
         if (!user) {
             await addUser(numericTelegramId);
             user = await getUser(numericTelegramId);
@@ -645,8 +653,7 @@ app.get('/api', async (req, res) => {
             });
         }
 
-        // Check if this ymid has already been processed (prevent duplication)
-        if (user.processedEvents && user.processedEvents.includes(ymid)) {
+        if (user.processed_events && user.processed_events.includes(ymid)) {
             console.log('⚠️ Event already processed:', ymid);
             return res.status(200).json({ 
                 success: true, 
@@ -654,10 +661,8 @@ app.get('/api', async (req, res) => {
             });
         }
 
-        // Get reward points from settings
-        const rewardPoints = 30; // Default reward points
+        const rewardPoints = 30;
 
-        // Create transaction data
         const transaction = {
             type: 'ad_reward',
             amount: rewardPoints,
@@ -668,28 +673,18 @@ app.get('/api', async (req, res) => {
             eventId: ymid
         };
 
-        // Update user balance and add transaction in Firestore
         const oldBalance = user.balance || 0;
         
-        // Add processed event and update user data
         const updatedUserData = {
-            processedEvents: admin.firestore.FieldValue.arrayUnion(ymid),
-            last_activity: admin.firestore.FieldValue.serverTimestamp()
+            processed_events: [...(user.processed_events || []), ymid],
+            last_activity: new Date().toISOString()
         };
-
-        // Keep only last 100 events to prevent array from growing too large
-        if (user.processedEvents && user.processedEvents.length >= 100) {
-            // This would require a more complex operation in Firestore
-            // For now, we'll just add the new event and handle trimming separately
-            console.log('⚠️ Processed events array growing large, consider cleanup');
-        }
 
         await saveUser(numericTelegramId, updatedUserData);
         await updateUserBalance(numericTelegramId, rewardPoints, transaction);
 
         console.log(`✅ Reward added: ${rewardPoints} points to user ${telegram_id}. Balance: ${oldBalance} → ${oldBalance + rewardPoints}`);
 
-        // Send successful response to Monetag
         res.status(200).json({ 
             success: true, 
             message: 'Reward processed successfully',
@@ -741,14 +736,18 @@ app.get('/api/tasks/verify-membership', async (req, res) => {
 // Notification system for new tasks
 async function sendTaskNotificationToAllUsers(taskData) {
     try {
-        const usersSnapshot = await db.collection('users').get();
-        const userCount = usersSnapshot.size;
+        const { data: users, error } = await supabase
+            .from('users')
+            .select('id');
+        
+        if (error) throw error;
+        
+        const userCount = users.length;
         let sentCount = 0;
         let failedCount = 0;
 
         console.log(`📢 Sending task notification to ${userCount} users...`);
 
-        // Determine task type and emoji
         let taskType, emoji;
         switch (taskData.type) {
             case 'channel':
@@ -778,31 +777,21 @@ async function sendTaskNotificationToAllUsers(taskData) {
 
         const message = `${emoji} <b>🆕 New ${taskType} task: ${taskData.title} (+${taskData.amount} pts). Check Tasks now!</b>`;
 
-        // Send to each user
-        for (const userDoc of usersSnapshot.docs) {
-            const userId = userDoc.id;
+        for (const user of users) {
             try {
-                await bot.sendMessage(userId, message, { parse_mode: 'HTML' });
+                await bot.sendMessage(user.id, message, { parse_mode: 'HTML' });
                 sentCount++;
-                console.log(`✅ Notification sent to user ${userId}`);
+                console.log(`✅ Notification sent to user ${user.id}`);
                 
-                // Small delay to avoid rate limiting
                 await new Promise(resolve => setTimeout(resolve, 100));
             } catch (error) {
-                console.error(`❌ Failed to send notification to user ${userId}:`, error.message);
+                console.error(`❌ Failed to send notification to user ${user.id}:`, error.message);
                 failedCount++;
-                
-                // If user blocked the bot or chat doesn't exist, you might want to mark them as inactive
-                if (error.response && error.response.statusCode === 403) {
-                    console.log(`🗑️ User ${userId} blocked the bot, consider marking as inactive`);
-                    // You could add an 'active' field to users and set it to false here
-                }
             }
         }
 
         console.log(`📊 Notification summary: ${sentCount} sent, ${failedCount} failed`);
 
-        // Notify admin about the broadcast
         await bot.sendMessage(
             adminId, 
             `📢 Task notification sent!\n\n` +
@@ -867,13 +856,16 @@ app.post('/api/tasks/send-notification', async (req, res) => {
 // API endpoint to get user count
 app.get('/api/users/count', async (req, res) => {
     try {
-        const usersSnapshot = await db.collection('users').get();
-        const userCount = usersSnapshot.size;
+        const { count, error } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true });
+        
+        if (error) throw error;
         
         res.json({
             success: true,
-            userCount: userCount,
-            activeUsers: userCount
+            userCount: count,
+            activeUsers: count
         });
     } catch (error) {
         console.error('Error getting user count:', error);
@@ -921,13 +913,16 @@ app.get('/api/withdrawals/check-pending', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing userId parameter' });
     }
     
-    const snapshot = await withdrawalsCollection
-      .where('userId', '==', userId.toString())
-      .where('status', '==', 'pending')
-      .limit(1)
-      .get();
+    const { data: withdrawals, error } = await supabase
+      .from('withdrawals')
+      .select('*')
+      .eq('user_id', userId.toString())
+      .eq('status', 'pending')
+      .limit(1);
     
-    const hasPending = !snapshot.empty;
+    if (error) throw error;
+    
+    const hasPending = withdrawals && withdrawals.length > 0;
     
     res.json({
       success: true,
@@ -940,7 +935,7 @@ app.get('/api/withdrawals/check-pending', async (req, res) => {
   }
 });
 
-// Add this API endpoint to your index.js
+// API endpoint to add balance
 app.post('/api/user/add-balance', async (req, res) => {
   try {
     const { userId, amount, description, type = 'ad_reward' } = req.body;
@@ -954,7 +949,6 @@ app.post('/api/user/add-balance', async (req, res) => {
     
     console.log(`💰 Adding balance via API: User ${userId}, Amount: ${amount}, Type: ${type}`);
     
-    // Create transaction data
     const transactionData = {
       type: type,
       amount: parseInt(amount),
@@ -962,11 +956,9 @@ app.post('/api/user/add-balance', async (req, res) => {
       timestamp: new Date().toISOString()
     };
     
-    // Use your existing updateUserBalance function
     const success = await updateUserBalance(userId, parseInt(amount), transactionData);
     
     if (success) {
-      // Get updated balance to return
       const user = await getUser(userId.toString());
       const newBalance = user ? user.balance : 0;
       
@@ -991,8 +983,6 @@ app.post('/api/user/add-balance', async (req, res) => {
   }
 });
 
-// Add these endpoints to your index.js file:
-
 // API endpoint to get wallet data
 app.get('/api/user/wallet-data', async (req, res) => {
   try {
@@ -1002,20 +992,18 @@ app.get('/api/user/wallet-data', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing userId parameter' });
     }
     
-    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    const user = await getUser(userId.toString());
     
-    if (!userDoc.exists) {
+    if (!user) {
       return res.json({ 
         success: true, 
         walletData: null 
       });
     }
     
-    const user = userDoc.data();
-    
     res.json({
       success: true,
-      walletData: user.walletData || null
+      walletData: user.wallet_data || null
     });
   } catch (error) {
     console.error('Error getting wallet data:', error);
@@ -1032,9 +1020,8 @@ app.post('/api/user/save-wallet-data', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
     
-    await db.collection('users').doc(userId.toString()).update({
-      walletData: walletData,
-      last_activity: admin.firestore.FieldValue.serverTimestamp()
+    await saveUser(userId.toString(), {
+      wallet_data: walletData
     });
     
     res.json({ success: true, message: 'Wallet data saved successfully' });
@@ -1058,19 +1045,16 @@ app.post('/api/user/deduct-balance', async (req, res) => {
     
     console.log(`💰 Deducting balance via API: User ${userId}, Amount: ${amount}`);
     
-    // Create transaction data
     const transactionData = {
       type: 'wallet_edit_fee',
-      amount: -parseInt(amount), // Negative amount for deduction
+      amount: -parseInt(amount),
       description: description || 'Wallet edit fee',
       timestamp: new Date().toISOString()
     };
     
-    // Use your existing updateUserBalance function
     const success = await updateUserBalance(userId, -parseInt(amount), transactionData);
     
     if (success) {
-      // Get updated balance to return
       const user = await getUser(userId.toString());
       const newBalance = user ? user.balance : 0;
       
@@ -1095,8 +1079,6 @@ app.post('/api/user/deduct-balance', async (req, res) => {
   }
 });
 
-// Add these endpoints to your index.js file:
-
 // API endpoint to get user's pending withdrawals total
 app.get('/api/withdrawals/user-pending', async (req, res) => {
   try {
@@ -1106,14 +1088,16 @@ app.get('/api/withdrawals/user-pending', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing userId parameter' });
     }
     
-    const snapshot = await withdrawalsCollection
-      .where('userId', '==', userId.toString())
-      .where('status', '==', 'pending')
-      .get();
+    const { data: withdrawals, error } = await supabase
+      .from('withdrawals')
+      .select('amount')
+      .eq('user_id', userId.toString())
+      .eq('status', 'pending');
+    
+    if (error) throw error;
     
     let totalPending = 0;
-    snapshot.forEach(doc => {
-      const withdrawal = doc.data();
+    withdrawals.forEach(withdrawal => {
       totalPending += withdrawal.amount || 0;
     });
     
@@ -1129,7 +1113,6 @@ app.get('/api/withdrawals/user-pending', async (req, res) => {
 });
 
 // API endpoint to create withdrawal request
-// API endpoint to create withdrawal request
 app.post('/api/withdrawals/create', async (req, res) => {
   try {
     const withdrawalRequest = req.body;
@@ -1138,10 +1121,22 @@ app.post('/api/withdrawals/create', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
     
-    // Save to Firestore
-    await withdrawalsCollection.doc(withdrawalRequest.id).set(withdrawalRequest);
+    const { error } = await supabase
+      .from('withdrawals')
+      .insert([{
+        id: withdrawalRequest.id,
+        user_id: withdrawalRequest.userId,
+        username: withdrawalRequest.username,
+        amount: withdrawalRequest.amount,
+        wkc_amount: withdrawalRequest.wkcAmount,
+        wallet: withdrawalRequest.wallet,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }]);
     
-    // ✅ FIX: Use withdrawalRequest instead of request
+    if (error) throw error;
+    
     await sendWithdrawalRequestDM(withdrawalRequest.userId, withdrawalRequest.amount, withdrawalRequest.wkcAmount);
     
     res.json({ 
@@ -1164,12 +1159,15 @@ app.post('/api/user/add-withdrawal-history', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
     
-    const userRef = db.collection('users').doc(userId.toString());
+    const user = await getUser(userId.toString());
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
     
-    // Add to withdrawal history array
-    await userRef.update({
-      withdrawalHistory: admin.firestore.FieldValue.arrayUnion(withdrawalEntry),
-      last_activity: admin.firestore.FieldValue.serverTimestamp()
+    const updatedHistory = [...(user.withdrawal_history || []), withdrawalEntry];
+    
+    await saveUser(userId.toString(), {
+      withdrawal_history: updatedHistory
     });
     
     res.json({ success: true, message: 'Withdrawal history added successfully' });
@@ -1188,20 +1186,18 @@ app.get('/api/user/withdrawal-history', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing userId parameter' });
     }
     
-    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    const user = await getUser(userId.toString());
     
-    if (!userDoc.exists) {
+    if (!user) {
       return res.json({ 
         success: true, 
         withdrawalHistory: [] 
       });
     }
     
-    const user = userDoc.data();
-    
     res.json({
       success: true,
-      withdrawalHistory: user.withdrawalHistory || []
+      withdrawalHistory: user.withdrawal_history || []
     });
   } catch (error) {
     console.error('Error getting withdrawal history:', error);
@@ -1218,9 +1214,9 @@ app.get('/api/user/daily-rewards-data', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing userId parameter' });
     }
     
-    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    const user = await getUser(userId.toString());
     
-    if (!userDoc.exists) {
+    if (!user) {
       return res.json({ 
         success: true, 
         dailyRewardsData: {
@@ -1232,11 +1228,9 @@ app.get('/api/user/daily-rewards-data', async (req, res) => {
       });
     }
     
-    const user = userDoc.data();
-    
     res.json({
       success: true,
-      dailyRewardsData: user.dailyRewardsData || {
+      dailyRewardsData: user.daily_rewards_data || {
         lastClaimDate: '',
         claimsToday: 0,
         totalClaims: 0,
@@ -1261,10 +1255,8 @@ app.post('/api/user/save-daily-rewards-data', async (req, res) => {
     console.log('💾 Saving daily rewards data for user:', userId);
     console.log('📊 Data to save:', dailyRewardsData);
     
-    // Save to user document
-    await db.collection('users').doc(userId.toString()).update({
-      dailyRewardsData: dailyRewardsData,
-      last_activity: admin.firestore.FieldValue.serverTimestamp()
+    await saveUser(userId.toString(), {
+      daily_rewards_data: dailyRewardsData
     });
     
     console.log('✅ Daily rewards data saved successfully');
@@ -1296,7 +1288,6 @@ app.post('/api/admin/send-password', async (req, res) => {
             });
         }
         
-        // Check if user is authorized
         if (!ALLOWED_USER_IDS.includes(userId)) {
             console.log('❌ Unauthorized user attempt:', userId);
             return res.status(403).json({ 
@@ -1307,7 +1298,6 @@ app.post('/api/admin/send-password', async (req, res) => {
         
         console.log('✅ Authorized user, sending password via bot...');
         
-        // Send password via bot
         const message = `🔐 *Admin Panel Access Code*\n\n` +
                       `👤 User ID: ${userId}\n` +
                       `🔑 One-Time Password: *${password}*\n\n` +
@@ -1326,7 +1316,6 @@ app.post('/api/admin/send-password', async (req, res) => {
     } catch (error) {
         console.error('❌ Error sending password:', error);
         
-        // More specific error handling
         if (error.response && error.response.statusCode === 403) {
             return res.status(500).json({ 
                 success: false, 
@@ -1399,37 +1388,35 @@ app.get('/api/leaderboard', async (req, res) => {
   try {
     const { userId } = req.query;
     
-    // Get top 10 users by balance
-    const usersSnapshot = await db.collection('users')
-      .orderBy('balance', 'desc')
-      .limit(10)
-      .get();
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, username, first_name, balance, referral_count')
+      .order('balance', { ascending: false })
+      .limit(10);
     
-    const leaderboard = [];
-    usersSnapshot.forEach(doc => {
-      const user = doc.data();
-      leaderboard.push({
-        id: doc.id,
-        username: user.username || user.first_name,
-        balance: user.balance || 0,
-        referral_count: user.referral_count || 0
-      });
-    });
+    if (error) throw error;
     
-    // Get user's rank
+    const leaderboard = users.map(user => ({
+      id: user.id,
+      username: user.username || user.first_name,
+      balance: user.balance || 0,
+      referral_count: user.referral_count || 0
+    }));
+    
     let userRank = '?';
     if (userId) {
-      const userDoc = await db.collection('users').doc(userId.toString()).get();
-      if (userDoc.exists) {
-        const userData = userDoc.data();
-        const userBalance = userData.balance || 0;
+      const user = await getUser(userId.toString());
+      if (user) {
+        const userBalance = user.balance || 0;
         
-        // Count users with higher balance to determine rank
-        const higherUsersSnapshot = await db.collection('users')
-          .where('balance', '>', userBalance)
-          .get();
+        const { data: higherUsers, error: countError } = await supabase
+          .from('users')
+          .select('id', { count: 'exact' })
+          .gt('balance', userBalance);
         
-        userRank = higherUsersSnapshot.size + 1;
+        if (!countError) {
+          userRank = higherUsers.length + 1;
+        }
       }
     }
     
@@ -1459,24 +1446,25 @@ app.get('/api/leaderboard/rank', async (req, res) => {
       });
     }
     
-    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    const user = await getUser(userId.toString());
     
-    if (!userDoc.exists) {
+    if (!user) {
       return res.json({ 
         success: true, 
         rank: '?' 
       });
     }
     
-    const userData = userDoc.data();
-    const userBalance = userData.balance || 0;
+    const userBalance = user.balance || 0;
     
-    // Count users with higher balance to determine rank
-    const higherUsersSnapshot = await db.collection('users')
-      .where('balance', '>', userBalance)
-      .get();
+    const { data: higherUsers, error } = await supabase
+      .from('users')
+      .select('id', { count: 'exact' })
+      .gt('balance', userBalance);
     
-    const rank = higherUsersSnapshot.size + 1;
+    if (error) throw error;
+    
+    const rank = higherUsers.length + 1;
     
     res.json({
       success: true,
@@ -1501,19 +1489,32 @@ app.get('/api/user/ads-task-data', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing userId parameter' });
     }
     
-    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    const user = await getUser(userId.toString());
     
-    if (!userDoc.exists) {
+    if (!user) {
       return res.json({ 
         success: true, 
-        adsTaskData: getDefaultAdsTaskData()
+        adsTaskData: {
+          lastAdDate: '',
+          adsToday: 0,
+          lastAdHour: -1,
+          adsThisHour: 0,
+          lifetimeAds: 0,
+          totalEarnings: 0,
+          history: []
+        }
       });
     }
     
-    const user = userDoc.data();
-    
-    // ✅ FIX: Get data from root level OR from adsData subfield for backward compatibility
-    const adsTaskData = user.adsTaskData || user.adsData || getDefaultAdsTaskData();
+    const adsTaskData = user.ads_task_data || user.ads_data || {
+      lastAdDate: '',
+      adsToday: 0,
+      lastAdHour: -1,
+      adsThisHour: 0,
+      lifetimeAds: 0,
+      totalEarnings: 0,
+      history: []
+    };
     
     res.json({
       success: true,
@@ -1533,9 +1534,9 @@ app.get('/api/user/ads-data', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing userId parameter' });
     }
     
-    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    const user = await getUser(userId.toString());
     
-    if (!userDoc.exists) {
+    if (!user) {
       return res.json({ 
         success: true, 
         adsData: {
@@ -1550,11 +1551,9 @@ app.get('/api/user/ads-data', async (req, res) => {
       });
     }
     
-    const user = userDoc.data();
-    
     res.json({
       success: true,
-      adsData: user.adsData || {
+      adsData: user.ads_data || {
         lastAdDate: '',
         adsToday: 0,
         lastAdHour: -1,
@@ -1578,10 +1577,8 @@ app.post('/api/user/save-ads-task-data', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
     
-    // ✅ FIX: Save to root level as adsTaskData
-    await db.collection('users').doc(userId.toString()).update({
-      adsTaskData: adsTaskData,
-      last_activity: admin.firestore.FieldValue.serverTimestamp()
+    await saveUser(userId.toString(), {
+      ads_task_data: adsTaskData
     });
     
     res.json({ success: true, message: 'Ads task data saved successfully' });
@@ -1600,9 +1597,8 @@ app.post('/api/user/save-ads-data', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
     
-    await db.collection('users').doc(userId.toString()).update({
-      adsData: adsData,
-      last_activity: admin.firestore.FieldValue.serverTimestamp()
+    await saveUser(userId.toString(), {
+      ads_data: adsData
     });
     
     res.json({ success: true, message: 'Ads data saved successfully' });
@@ -1612,7 +1608,7 @@ app.post('/api/user/save-ads-data', async (req, res) => {
   }
 });
 
-// Add this endpoint to your index.js to check user transactions
+// Add this endpoint to check user transactions
 app.get('/api/user/transactions', async (req, res) => {
     try {
         const { userId } = req.query;
@@ -1621,20 +1617,18 @@ app.get('/api/user/transactions', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing userId parameter' });
         }
         
-        const userDoc = await db.collection('users').doc(userId.toString()).get();
+        const user = await getUser(userId.toString());
         
-        if (!userDoc.exists) {
+        if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
-        
-        const user = userDoc.data();
         
         res.json({
             success: true,
             userId: userId,
             balance: user.balance || 0,
             transactions: user.transactions || [],
-            completedTasks: user.completedTasks || {},
+            completedTasks: user.completed_tasks || {},
             last_activity: user.last_activity
         });
     } catch (error) {
@@ -1647,15 +1641,35 @@ app.get('/api/user/transactions', async (req, res) => {
 app.post('/api/tasks/save', async (req, res) => {
     try {
         const task = req.body;
-        await tasksCollection.doc(task.id).set(task);
+        
+        const { error } = await supabase
+            .from('tasks')
+            .upsert([{
+                id: task.id,
+                title: task.title,
+                description: task.description,
+                amount: task.amount,
+                verification: task.verification,
+                link: task.link,
+                channel_id: task.channelId,
+                task_limit: task.taskLimit || 0,
+                completions: task.completions || 0,
+                completed_by: task.completedBy || [],
+                type: task.type,
+                status: task.status || 'active',
+                pending_approvals: task.pendingApprovals || [],
+                created_at: task.createdAt || new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }]);
+        
+        if (error) throw error;
+        
         res.json({ success: true, message: 'Task saved successfully' });
     } catch (error) {
         console.error('Error saving task:', error);
         res.status(500).json({ success: false, error: 'Failed to save task' });
     }
 });
-
-// Add to your index.js backend file
 
 // API endpoint to get task link
 app.get('/api/tasks/get-link', async (req, res) => {
@@ -1666,14 +1680,17 @@ app.get('/api/tasks/get-link', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing taskId parameter' });
         }
         
-        const taskDoc = await tasksCollection.doc(taskId).get();
-        if (!taskDoc.exists) {
+        const { data: task, error } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+        
+        if (error) throw error;
+        if (!task) {
             return res.status(404).json({ success: false, error: 'Task not found' });
         }
         
-        const task = taskDoc.data();
-        
-        // Redirect to the task link
         res.redirect(task.link);
     } catch (error) {
         console.error('Error getting task link:', error);
@@ -1690,27 +1707,26 @@ app.get('/api/tasks/is-completed', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing userId or taskId parameter' });
         }
         
-        const userDoc = await db.collection('users').doc(userId.toString()).get();
-        if (!userDoc.exists) {
+        const user = await getUser(userId.toString());
+        if (!user) {
             return res.json({ success: true, completed: false });
         }
         
-        const user = userDoc.data();
-        const completedTasks = user.completedTasks || {};
-        
-        // Check if task is marked as completed in user's document
+        const completedTasks = user.completed_tasks || {};
         const isCompleted = !!completedTasks[taskId];
         
-        // Also check if user is in the task's completedBy array (backward compatibility)
         if (!isCompleted) {
-            const taskDoc = await tasksCollection.doc(taskId).get();
-            if (taskDoc.exists) {
-                const task = taskDoc.data();
-                const completedBy = task.completedBy || [];
+            const { data: task, error } = await supabase
+                .from('tasks')
+                .select('completed_by')
+                .eq('id', taskId)
+                .single();
+            
+            if (!error && task) {
+                const completedBy = task.completed_by || [];
                 if (completedBy.includes(userId.toString())) {
-                    // If user is in completedBy but not in completedTasks, update it
-                    await db.collection('users').doc(userId.toString()).update({
-                        [`completedTasks.${taskId}`]: true
+                    await saveUser(userId.toString(), {
+                        completed_tasks: { ...completedTasks, [taskId]: true }
                     });
                     return res.json({ success: true, completed: true });
                 }
@@ -1727,7 +1743,7 @@ app.get('/api/tasks/is-completed', async (req, res) => {
     }
 });
 
-// Add this endpoint to migrate existing completed tasks to the new system
+// API endpoint to migrate existing completed tasks to the new system
 app.post('/api/tasks/migrate-completed', async (req, res) => {
     try {
         const { userId } = req.body;
@@ -1736,33 +1752,30 @@ app.post('/api/tasks/migrate-completed', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing userId' });
         }
         
-        // Get all tasks
-        const tasksSnapshot = await tasksCollection.get();
-        const userRef = db.collection('users').doc(userId.toString());
-        const userDoc = await userRef.get();
+        const { data: tasks, error: tasksError } = await supabase
+            .from('tasks')
+            .select('id, completed_by');
         
-        if (!userDoc.exists) {
+        if (tasksError) throw tasksError;
+        
+        const user = await getUser(userId.toString());
+        if (!user) {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
         
         let migratedCount = 0;
-        const completedTasks = {};
+        const completedTasks = { ...user.completed_tasks };
         
-        // Check each task to see if user has completed it
-        for (const taskDoc of tasksSnapshot.docs) {
-            const task = taskDoc.data();
-            const taskId = taskDoc.id;
-            const completedBy = task.completedBy || [];
-            
+        for (const task of tasks) {
+            const completedBy = task.completed_by || [];
             if (completedBy.includes(userId.toString())) {
-                completedTasks[taskId] = true;
+                completedTasks[task.id] = true;
                 migratedCount++;
             }
         }
         
-        // Update user's completedTasks
-        await userRef.update({
-            completedTasks: completedTasks
+        await saveUser(userId.toString(), {
+            completed_tasks: completedTasks
         });
         
         res.json({ 
@@ -1786,14 +1799,18 @@ app.get('/api/tasks/is-pending', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing userId or taskId parameter' });
         }
         
-        const taskDoc = await tasksCollection.doc(taskId).get();
-        if (!taskDoc.exists) {
+        const { data: task, error } = await supabase
+            .from('tasks')
+            .select('pending_approvals')
+            .eq('id', taskId)
+            .single();
+        
+        if (error) throw error;
+        if (!task) {
             return res.json({ success: true, pending: false });
         }
         
-        const task = taskDoc.data();
-        const pendingApprovals = task.pendingApprovals || [];
-        
+        const pendingApprovals = task.pending_approvals || [];
         const isPending = pendingApprovals.some(approval => approval.userId === userId);
         
         res.json({ 
@@ -1810,10 +1827,8 @@ app.get('/api/tasks/is-pending', async (req, res) => {
 app.post('/api/tasks/complete', async (req, res) => {
     const { taskId, userId, amount, taskType } = req.body;
     
-    // Create a unique lock key for this user+task combination
     const lockKey = `${userId}_${taskId}`;
     
-    // Check if this request is already being processed
     if (completionLocks.has(lockKey)) {
         console.log('⏳ Request already in progress, skipping duplicate:', lockKey);
         return res.status(429).json({ 
@@ -1822,7 +1837,6 @@ app.post('/api/tasks/complete', async (req, res) => {
         });
     }
     
-    // Acquire lock
     completionLocks.set(lockKey, true);
     
     try {
@@ -1832,52 +1846,53 @@ app.post('/api/tasks/complete', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing required fields' });
         }
         
-        // Get task
-        const taskDoc = await tasksCollection.doc(taskId).get();
-        if (!taskDoc.exists) {
+        const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+        
+        if (taskError) throw taskError;
+        if (!task) {
             return res.status(404).json({ success: false, error: 'Task not found' });
         }
         
-        const task = taskDoc.data();
-        console.log('📋 Task details:', task.title, 'Completions:', task.completions, 'Limit:', task.taskLimit);
+        console.log('📋 Task details:', task.title, 'Completions:', task.completions, 'Limit:', task.task_limit);
         
-        // ✅ CRITICAL: Check if user already completed this task FIRST using transaction
-        const userRef = db.collection('users').doc(userId.toString());
+        const user = await getUser(userId.toString());
+        const userCompletedTasks = user ? user.completed_tasks || {} : {};
         
-        // Use Firestore transaction for atomic operations
-        await db.runTransaction(async (transaction) => {
-            const userDoc = await transaction.get(userRef);
-            const userCompletedTasks = userDoc.exists ? userDoc.data().completedTasks || {} : {};
-            
-            if (userCompletedTasks[taskId]) {
-                console.log('❌ User already completed this task (in transaction)');
-                throw new Error('ALREADY_COMPLETED');
-            }
-            
-            // Check if task has reached its limit
-            if (task.taskLimit > 0 && task.completions >= task.taskLimit) {
-                console.log('❌ Task reached completion limit (in transaction)');
-                throw new Error('TASK_LIMIT_REACHED');
-            }
-            
-            console.log('✅ Task can be completed, proceeding with transaction...');
-            
-            // ✅ MARK AS COMPLETED FIRST to prevent duplicates
-            transaction.update(userRef, {
-                [`completedTasks.${taskId}`]: true,
-                last_activity: admin.firestore.FieldValue.serverTimestamp()
-            });
-            
-            // Update task completions
-            transaction.update(tasksCollection.doc(taskId), {
-                completions: admin.firestore.FieldValue.increment(1),
-                completedBy: admin.firestore.FieldValue.arrayUnion(userId.toString())
-            });
+        if (userCompletedTasks[taskId]) {
+            console.log('❌ User already completed this task');
+            throw new Error('ALREADY_COMPLETED');
+        }
+        
+        if (task.task_limit > 0 && task.completions >= task.task_limit) {
+            console.log('❌ Task reached completion limit');
+            throw new Error('TASK_LIMIT_REACHED');
+        }
+        
+        console.log('✅ Task can be completed, proceeding...');
+        
+        // Mark as completed
+        await saveUser(userId.toString(), {
+            completed_tasks: { ...userCompletedTasks, [taskId]: true }
         });
+        
+        // Update task completions
+        const { error: updateError } = await supabase
+            .from('tasks')
+            .update({
+                completions: task.completions + 1,
+                completed_by: [...(task.completed_by || []), userId.toString()],
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', taskId);
+        
+        if (updateError) throw updateError;
         
         console.log('✅ Transaction completed successfully');
         
-        // Now update user balance (outside transaction for better performance)
         const balanceUpdated = await updateUserBalance(userId, parseInt(amount), {
             type: 'task_reward',
             amount: parseInt(amount),
@@ -1890,14 +1905,14 @@ app.post('/api/tasks/complete', async (req, res) => {
             console.warn('⚠️ Balance update failed, but task was marked as completed');
         }
         
-        // Check if task has reached its limit
-        const updatedTaskDoc = await tasksCollection.doc(taskId).get();
-        const updatedTask = updatedTaskDoc.data();
-        
-        if (task.taskLimit > 0 && updatedTask.completions >= task.taskLimit) {
-            await tasksCollection.doc(taskId).update({
-                status: 'completed'
-            });
+        if (task.task_limit > 0 && (task.completions + 1) >= task.task_limit) {
+            await supabase
+                .from('tasks')
+                .update({
+                    status: 'completed',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', taskId);
             console.log('✅ Task marked as completed (reached limit)');
         }
         
@@ -1931,13 +1946,12 @@ app.post('/api/tasks/complete', async (req, res) => {
             error: 'Failed to complete task: ' + error.message 
         });
     } finally {
-        // Always release the lock
         completionLocks.delete(lockKey);
         console.log('🔓 Lock released for:', lockKey);
     }
 });
 
-// Fix the backend endpoint - update this in your index.js
+// Fix the backend endpoint for social task submission
 app.post('/api/tasks/submit-social', async (req, res) => {
     try {
         console.log('📥 Received social task submission request');
@@ -1953,9 +1967,14 @@ app.post('/api/tasks/submit-social', async (req, res) => {
             });
         }
         
-        // Get task
-        const taskDoc = await tasksCollection.doc(taskId).get();
-        if (!taskDoc.exists) {
+        const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+        
+        if (taskError) throw taskError;
+        if (!task) {
             console.log('❌ Task not found:', taskId);
             return res.status(404).json({ 
                 success: false, 
@@ -1963,11 +1982,9 @@ app.post('/api/tasks/submit-social', async (req, res) => {
             });
         }
         
-        const task = taskDoc.data();
         console.log('✅ Found task:', task.title);
         
-        // Check if user already has a pending submission
-        const pendingApprovals = task.pendingApprovals || [];
+        const pendingApprovals = task.pending_approvals || [];
         const existingSubmission = pendingApprovals.find(approval => approval.userId === userId.toString());
         
         if (existingSubmission) {
@@ -1978,11 +1995,9 @@ app.post('/api/tasks/submit-social', async (req, res) => {
             });
         }
         
-        // Check if user already completed this task
-        const userDoc = await db.collection('users').doc(userId.toString()).get();
-        if (userDoc.exists) {
-            const user = userDoc.data();
-            const completedTasks = user.completedTasks || {};
+        const user = await getUser(userId.toString());
+        if (user) {
+            const completedTasks = user.completed_tasks || {};
             if (completedTasks[taskId]) {
                 console.log('❌ User already completed this task');
                 return res.status(400).json({ 
@@ -1992,8 +2007,7 @@ app.post('/api/tasks/submit-social', async (req, res) => {
             }
         }
         
-        // Check if task has reached its limit
-        if (task.taskLimit > 0 && (task.completions || 0) >= task.taskLimit) {
+        if (task.task_limit > 0 && (task.completions || 0) >= task.task_limit) {
             console.log('❌ Task reached completion limit');
             return res.status(400).json({ 
                 success: false, 
@@ -2001,11 +2015,10 @@ app.post('/api/tasks/submit-social', async (req, res) => {
             });
         }
         
-        // Create approval data with regular timestamp (not serverTimestamp)
         const approvalData = {
             userId: userId.toString(),
             userData: userData || {},
-            submittedAt: new Date().toISOString() // Use client-side timestamp instead
+            submittedAt: new Date().toISOString()
         };
         
         if (phoneNumber) approvalData.phoneNumber = phoneNumber;
@@ -2013,10 +2026,15 @@ app.post('/api/tasks/submit-social', async (req, res) => {
         
         console.log('📝 Adding approval data:', approvalData);
         
-        // Update the task with the new pending approval
-        await tasksCollection.doc(taskId).update({
-            pendingApprovals: admin.firestore.FieldValue.arrayUnion(approvalData)
-        });
+        const { error: updateError } = await supabase
+            .from('tasks')
+            .update({
+                pending_approvals: [...pendingApprovals, approvalData],
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', taskId);
+        
+        if (updateError) throw updateError;
         
         console.log('✅ Social task submission successful for user:', userId);
         
@@ -2040,28 +2058,34 @@ app.post('/api/tasks/submit-social', async (req, res) => {
 app.get('/api/tasks/get', async (req, res) => {
     try {
         const { type, id } = req.query;
-        let query = tasksCollection;
-        
-        if (type) {
-            query = query.where('type', '==', type);
-        }
         
         if (id) {
-            const taskDoc = await tasksCollection.doc(id).get();
-            if (taskDoc.exists) {
-                return res.json({ success: true, task: taskDoc.data() });
+            const { data: task, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('id', id)
+                .single();
+            
+            if (error) throw error;
+            
+            if (task) {
+                return res.json({ success: true, task: task });
             } else {
                 return res.status(404).json({ success: false, error: 'Task not found' });
             }
         }
         
-        const snapshot = await query.get();
-        const tasks = [];
-        snapshot.forEach(doc => {
-            tasks.push(doc.data());
-        });
+        let query = supabase.from('tasks').select('*');
         
-        res.json({ success: true, tasks: tasks });
+        if (type) {
+            query = query.eq('type', type);
+        }
+        
+        const { data: tasks, error } = await query;
+        
+        if (error) throw error;
+        
+        res.json({ success: true, tasks: tasks || [] });
     } catch (error) {
         console.error('Error getting tasks:', error);
         res.status(500).json({ success: false, error: 'Failed to get tasks' });
@@ -2072,7 +2096,14 @@ app.get('/api/tasks/get', async (req, res) => {
 app.post('/api/tasks/delete', async (req, res) => {
     try {
         const { taskId } = req.body;
-        await tasksCollection.doc(taskId).delete();
+        
+        const { error } = await supabase
+            .from('tasks')
+            .delete()
+            .eq('id', taskId);
+        
+        if (error) throw error;
+        
         res.json({ success: true, message: 'Task deleted successfully' });
     } catch (error) {
         console.error('Error deleting task:', error);
@@ -2080,51 +2111,54 @@ app.post('/api/tasks/delete', async (req, res) => {
     }
 });
 
-// Update the task approval endpoint in your index.js
+// Update the task approval endpoint
 app.post('/api/tasks/approve', async (req, res) => {
     try {
         const { taskId, approvalIndex } = req.body;
         
-        const taskDoc = await tasksCollection.doc(taskId).get();
-        if (!taskDoc.exists) {
+        const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+        
+        if (taskError) throw taskError;
+        if (!task) {
             return res.status(404).json({ success: false, error: 'Task not found' });
         }
         
-        const task = taskDoc.data();
-        
-        if (!task.pendingApprovals || !task.pendingApprovals[approvalIndex]) {
+        if (!task.pending_approvals || !task.pending_approvals[approvalIndex]) {
             return res.status(400).json({ success: false, error: 'Approval not found' });
         }
         
-        const approval = task.pendingApprovals[approvalIndex];
+        const approval = task.pending_approvals[approvalIndex];
         
-        // Remove from pending
-        const updatedPendingApprovals = [...task.pendingApprovals];
+        const updatedPendingApprovals = [...task.pending_approvals];
         updatedPendingApprovals.splice(approvalIndex, 1);
         
-        // Update completions
         const newCompletions = (task.completions || 0) + 1;
         
-        // Add to completedBy array
-        const updatedCompletedBy = [...(task.completedBy || [])];
+        const updatedCompletedBy = [...(task.completed_by || [])];
         if (!updatedCompletedBy.includes(approval.userId)) {
             updatedCompletedBy.push(approval.userId);
         }
         
-        // Update task in Firestore
-        await tasksCollection.doc(taskId).update({
-            pendingApprovals: updatedPendingApprovals,
-            completions: newCompletions,
-            completedBy: updatedCompletedBy
+        const { error: updateError } = await supabase
+            .from('tasks')
+            .update({
+                pending_approvals: updatedPendingApprovals,
+                completions: newCompletions,
+                completed_by: updatedCompletedBy,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', taskId);
+        
+        if (updateError) throw updateError;
+        
+        await saveUser(approval.userId, {
+            completed_tasks: { ...(await getUser(approval.userId))?.completed_tasks, [taskId]: true }
         });
         
-        // ✅ CRITICAL: Mark task as completed for this user in their user document
-        await db.collection('users').doc(approval.userId).update({
-            [`completedTasks.${taskId}`]: true,
-            last_activity: admin.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // Update user balance
         await updateUserBalance(approval.userId, task.amount, {
             type: 'task_reward',
             amount: task.amount,
@@ -2133,14 +2167,16 @@ app.post('/api/tasks/approve', async (req, res) => {
             taskType: task.type
         });
         
-        // Check if task has reached its limit
-        if (task.taskLimit > 0 && newCompletions >= task.taskLimit) {
-            await tasksCollection.doc(taskId).update({
-                status: 'completed'
-            });
+        if (task.task_limit > 0 && newCompletions >= task.task_limit) {
+            await supabase
+                .from('tasks')
+                .update({
+                    status: 'completed',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', taskId);
         }
         
-        // Notify user via bot
         try {
             await bot.sendMessage(
                 approval.userId, 
@@ -2167,17 +2203,29 @@ app.post('/api/tasks/reject', async (req, res) => {
     try {
         const { taskId, approvalIndex } = req.body;
         
-        const taskDoc = await tasksCollection.doc(taskId).get();
-        if (!taskDoc.exists) {
+        const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
+        
+        if (taskError) throw taskError;
+        if (!task) {
             return res.status(404).json({ success: false, error: 'Task not found' });
         }
         
-        const task = taskDoc.data();
-        task.pendingApprovals.splice(approvalIndex, 1);
+        const updatedPendingApprovals = [...task.pending_approvals];
+        updatedPendingApprovals.splice(approvalIndex, 1);
         
-        await tasksCollection.doc(taskId).update({
-            pendingApprovals: task.pendingApprovals
-        });
+        const { error: updateError } = await supabase
+            .from('tasks')
+            .update({
+                pending_approvals: updatedPendingApprovals,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', taskId);
+        
+        if (updateError) throw updateError;
         
         res.json({ success: true, message: 'Task rejected successfully' });
     } catch (error) {
@@ -2189,13 +2237,18 @@ app.post('/api/tasks/reject', async (req, res) => {
 // API endpoint to get pending approvals
 app.get('/api/tasks/pending-approvals', async (req, res) => {
     try {
-        const snapshot = await tasksCollection.where('pendingApprovals', '!=', []).get();
+        const { data: tasks, error } = await supabase
+            .from('tasks')
+            .select('*')
+            .not('pending_approvals', 'is', null);
+        
+        if (error) throw error;
+        
         const approvals = [];
         
-        snapshot.forEach(doc => {
-            const task = doc.data();
-            if (task.pendingApprovals && task.pendingApprovals.length > 0) {
-                task.pendingApprovals.forEach((approval, index) => {
+        tasks.forEach(task => {
+            if (task.pending_approvals && task.pending_approvals.length > 0) {
+                task.pending_approvals.forEach((approval, index) => {
                     approvals.push({
                         taskId: task.id,
                         taskTitle: task.title,
@@ -2219,7 +2272,17 @@ app.get('/api/tasks/pending-approvals', async (req, res) => {
 app.post('/api/config/save', async (req, res) => {
     try {
         const { type, config } = req.body;
-        await configCollection.doc(type).set(config, { merge: true });
+        
+        const { error } = await supabase
+            .from('configurations')
+            .upsert([{
+                id: type,
+                config: config,
+                updated_at: new Date().toISOString()
+            }]);
+        
+        if (error) throw error;
+        
         res.json({ success: true, message: 'Configuration saved successfully' });
     } catch (error) {
         console.error('Error saving configuration:', error);
@@ -2236,13 +2299,13 @@ app.get('/api/tasks/debug', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing taskId or userId' });
         }
         
-        // Get task data
-        const taskDoc = await tasksCollection.doc(taskId).get();
-        const task = taskDoc.exists ? taskDoc.data() : null;
+        const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('id', taskId)
+            .single();
         
-        // Get user data
-        const userDoc = await db.collection('users').doc(userId.toString()).get();
-        const user = userDoc.exists ? userDoc.data() : null;
+        const user = await getUser(userId.toString());
         
         res.json({
             success: true,
@@ -2251,17 +2314,17 @@ app.get('/api/tasks/debug', async (req, res) => {
                 title: task.title,
                 type: task.type,
                 completions: task.completions,
-                taskLimit: task.taskLimit,
-                completedBy: task.completedBy || [],
+                taskLimit: task.task_limit,
+                completedBy: task.completed_by || [],
                 status: task.status
             } : null,
             user: user ? {
                 id: userId,
-                completedTasks: user.completedTasks || {},
+                completedTasks: user.completed_tasks || {},
                 balance: user.balance || 0
             } : null,
-            isCompleted: user ? !!(user.completedTasks || {})[taskId] : false,
-            isInCompletedBy: task ? (task.completedBy || []).includes(userId.toString()) : false
+            isCompleted: user ? !!(user.completed_tasks || {})[taskId] : false,
+            isInCompletedBy: task ? (task.completed_by || []).includes(userId.toString()) : false
         });
         
     } catch (error) {
@@ -2273,191 +2336,29 @@ app.get('/api/tasks/debug', async (req, res) => {
 // API endpoint to get all configurations
 app.get('/api/config/get-all', async (req, res) => {
     try {
-        const snapshot = await configCollection.get();
-        const configs = {};
+        const { data: configs, error } = await supabase
+            .from('configurations')
+            .select('*');
         
-        snapshot.forEach(doc => {
-            configs[doc.id] = doc.data();
+        if (error) throw error;
+        
+        const configsMap = {};
+        configs.forEach(config => {
+            configsMap[config.id] = config.config;
         });
         
-        res.json({ success: true, configs: configs });
+        res.json({ success: true, configs: configsMap });
     } catch (error) {
         console.error('Error getting configurations:', error);
         res.status(500).json({ success: false, error: 'Failed to get configurations' });
     }
 });
 
-// API endpoint to approve withdrawal
-app.post('/api/withdrawals/approve', async (req, res) => {
-    try {
-        const { requestId } = req.body;
-        
-        const withdrawalDoc = await withdrawalsCollection.doc(requestId).get();
-        if (!withdrawalDoc.exists) {
-            return res.status(404).json({ success: false, error: 'Withdrawal request not found' });
-        }
-        
-        const request = withdrawalDoc.data();
-        
-        // ✅ FIX: Don't refund on payment failure - keep it pending
-        const paymentData = {
-            address: request.wallet,
-            amount: request.wkcAmount.toString(),
-            token: "WKC"
-        };
-        
-        console.log('💰 Processing payment:', paymentData);
-        
-        const paymentResponse = await fetch('https://bnb-autopayed.onrender.com/api/pay', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(paymentData)
-        });
-        
-        if (!paymentResponse.ok) {
-            // ✅ FIX: DON'T REFUND - Keep withdrawal as pending for admin to retry later
-            const errorText = await paymentResponse.text();
-            console.error('❌ Payment failed but keeping withdrawal pending:', errorText);
-            
-            // Send failure DM to user (optional - you can remove this if you don't want users to know)
-            await sendWithdrawalFailureDM(request.userId, request, `Payment processing delayed. Admin will retry shortly.`);
-            
-            return res.status(400).json({ 
-                success: false, 
-                error: `Payment failed: ${errorText}. Withdrawal remains pending for retry.` 
-            });
-        }
-        
-        const result = await paymentResponse.json();
-        
-        if (result.success) {
-            // ✅ SUCCESS: Update withdrawal status to approved
-            await withdrawalsCollection.doc(requestId).update({
-                status: 'approved',
-                approvedAt: admin.firestore.FieldValue.serverTimestamp(),
-                transactionHash: result.txHash,
-                explorerLink: result.explorerLink
-            });
-
-            // ✅ Update user's withdrawal history status
-            await updateWithdrawalHistoryStatus(request.userId, requestId, 'approved', result.txHash);
-
-            // ✅ SEND SUCCESS DM TO USER
-            await sendWithdrawalSuccessDM(request.userId, request, result);
-            
-            console.log('✅ Withdrawal approved successfully:', result.txHash);
-            
-            res.json({
-                success: true,
-                amount: request.wkcAmount,
-                wallet: request.wallet,
-                txHash: result.txHash,
-                explorerLink: result.explorerLink
-            });
-        } else {
-            // ✅ FIX: DON'T REFUND - Keep withdrawal as pending for admin to retry
-            console.error('❌ Payment API returned failure but keeping withdrawal pending:', result.error);
-            
-            // Send failure DM to user (optional - you can remove this if you don't want users to know)
-            await sendWithdrawalFailureDM(request.userId, request, `Payment processing delayed. Admin will retry shortly.`);
-            
-            return res.status(400).json({ 
-                success: false, 
-                error: result.error || 'Payment failed. Withdrawal remains pending for retry.' 
-            });
-        }
-    } catch (error) {
-        console.error('❌ Error approving withdrawal:', error);
-        
-        // ✅ FIX: DON'T REFUND ON ERROR - Keep withdrawal as pending
-        try {
-            const withdrawalDoc = await withdrawalsCollection.doc(requestId).get();
-            if (withdrawalDoc.exists) {
-                const request = withdrawalDoc.data();
-                // Send error DM to user (optional - you can remove this if you don't want users to know)
-                await sendWithdrawalFailureDM(request.userId, request, `Payment processing delayed due to technical issue. Admin will retry shortly.`);
-            }
-        } catch (dmError) {
-            console.error('Failed to send error DM:', dmError);
-        }
-        
-        res.status(500).json({ 
-            success: false, 
-            error: `Technical error: ${error.message}. Withdrawal remains pending for retry.` 
-        });
-    }
-});
-
-// ✅ NEW FUNCTION: Send withdrawal success DM
-async function sendWithdrawalSuccessDM(userId, request, paymentResult) {
-    try {
-        const message = `💸 *Withdrawal Successful!*\n\n` +
-                       `💰 *Amount Sent:* ${request.wkcAmount} WKC\n` +
-                       `📍 *Wallet:* \`${request.wallet}\`\n` +
-                       `🆔 *TX Hash:* \`${paymentResult.txHash}\`\n` +
-                       `⏰ *Processed:* ${new Date().toLocaleString()}\n\n` +
-                       `🔗 [View Transaction](${paymentResult.explorerLink})\n\n` +
-                       `✅ Funds have been sent to your wallet!`;
-
-        await bot.sendMessage(userId, message, {
-            parse_mode: 'Markdown',
-            disable_web_page_preview: false
-        });
-        
-        console.log(`✅ Withdrawal success DM sent to user ${userId}`);
-    } catch (error) {
-        console.error('❌ Failed to send withdrawal success DM:', error);
-        // Don't throw - DM failure shouldn't affect the withdrawal process
-    }
-}
-
-// ✅ NEW FUNCTION: Update withdrawal history status in user's document
-async function updateWithdrawalHistoryStatus(userId, withdrawalId, status, transactionHash = null) {
-    try {
-        const userRef = db.collection('users').doc(userId.toString());
-        const userDoc = await userRef.get();
-        
-        if (userDoc.exists) {
-            const user = userDoc.data();
-            const withdrawalHistory = user.withdrawalHistory || [];
-            
-            // Find and update the specific withdrawal entry
-            const updatedHistory = withdrawalHistory.map(entry => {
-                // We need a way to identify the withdrawal - using amount and date as identifier
-                // Alternatively, you could store withdrawalId in the history
-                if (entry.amount && entry.date) {
-                    // This is a simple match - you might want to improve this logic
-                    const entryDate = new Date(entry.date).getTime();
-                    const requestDate = new Date().getTime() - 24 * 60 * 60 * 1000; // Within last 24 hours
-                    
-                    if (entry.status === 'pending' && entryDate > requestDate) {
-                        return {
-                            ...entry,
-                            status: status,
-                            transactionHash: transactionHash,
-                            approvedAt: new Date().toISOString()
-                        };
-                    }
-                }
-                return entry;
-            });
-            
-            await userRef.update({
-                withdrawalHistory: updatedHistory
-            });
-            
-            console.log(`✅ Updated withdrawal history status to ${status} for user ${userId}`);
-        }
-    } catch (error) {
-        console.error('Error updating withdrawal history status:', error);
-    }
-}
-
-// ✅ UPDATED FUNCTION: Send withdrawal success DM (simpler message)
+// Withdrawal success DM function
 async function sendWithdrawalSuccessDM(userId, request, paymentResult) {
     try {
         const message = `✅ *Withdrawal Completed!*\n\n` +
-                       `💰 *Amount Sent:* ${request.wkcAmount} WKC\n` +
+                       `💰 *Amount Sent:* ${request.wkc_amount} WKC\n` +
                        `📍 *Wallet:* \`${request.wallet}\`\n\n` +
                        `✅ Funds have been sent to your wallet!`;
 
@@ -2472,15 +2373,13 @@ async function sendWithdrawalSuccessDM(userId, request, paymentResult) {
     }
 }
 
-// ✅ UPDATED FUNCTION: Send withdrawal failure DM (don't send to user)
+// Withdrawal failure DM function
 async function sendWithdrawalFailureDM(userId, request, errorMessage) {
     try {
-        // ✅ FIX: Don't send failure DMs to users - only log for admin
         console.log(`⚠️ Withdrawal processing delayed for user ${userId}: ${errorMessage}`);
         
-        // Optional: Send a generic "processing" message instead of failure
         const message = `🔄 *Withdrawal Processing*\n\n` +
-                       `💰 *Amount:* ${request.wkcAmount} WKC\n` +
+                       `💰 *Amount:* ${request.wkc_amount} WKC\n` +
                        `📍 *Wallet:* \`${request.wallet}\`\n\n` +
                        `Your withdrawal is being processed and will be completed shortly.`;
 
@@ -2494,56 +2393,143 @@ async function sendWithdrawalFailureDM(userId, request, errorMessage) {
     }
 }
 
-// ✅ NEW FUNCTION: Send withdrawal processing DM (optional - when request is first approved)
-async function sendWithdrawalProcessingDM(userId, request) {
+// API endpoint to approve withdrawal
+app.post('/api/withdrawals/approve', async (req, res) => {
     try {
-        const message = `🔄 *Withdrawal Processing*\n\n` +
-                       `💰 *Amount:* ${request.wkcAmount} WKC\n` +
-                       `📍 *Wallet:* \`${request.wallet}\`\n` +
-                       `⏰ *Started:* ${new Date().toLocaleString()}\n\n` +
-                       `Your withdrawal is being processed. You will receive another notification when it's completed.`;
-
-        await bot.sendMessage(userId, message, {
-            parse_mode: 'Markdown',
-            disable_web_page_preview: true
+        const { requestId } = req.body;
+        
+        const { data: withdrawal, error: withdrawalError } = await supabase
+            .from('withdrawals')
+            .select('*')
+            .eq('id', requestId)
+            .single();
+        
+        if (withdrawalError) throw withdrawalError;
+        if (!withdrawal) {
+            return res.status(404).json({ success: false, error: 'Withdrawal request not found' });
+        }
+        
+        const paymentData = {
+            address: withdrawal.wallet,
+            amount: withdrawal.wkc_amount.toString(),
+            token: "WKC"
+        };
+        
+        console.log('💰 Processing payment:', paymentData);
+        
+        const paymentResponse = await fetch('https://bnb-autopayed.onrender.com/api/pay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paymentData)
         });
         
-        console.log(`✅ Withdrawal processing DM sent to user ${userId}`);
+        if (!paymentResponse.ok) {
+            const errorText = await paymentResponse.text();
+            console.error('❌ Payment failed but keeping withdrawal pending:', errorText);
+            
+            await sendWithdrawalFailureDM(withdrawal.user_id, withdrawal, `Payment processing delayed. Admin will retry shortly.`);
+            
+            return res.status(400).json({ 
+                success: false, 
+                error: `Payment failed: ${errorText}. Withdrawal remains pending for retry.` 
+            });
+        }
+        
+        const result = await paymentResponse.json();
+        
+        if (result.success) {
+            await supabase
+                .from('withdrawals')
+                .update({
+                    status: 'approved',
+                    approved_at: new Date().toISOString(),
+                    transaction_hash: result.txHash,
+                    explorer_link: result.explorerLink,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', requestId);
+
+            await sendWithdrawalSuccessDM(withdrawal.user_id, withdrawal, result);
+            
+            console.log('✅ Withdrawal approved successfully:', result.txHash);
+            
+            res.json({
+                success: true,
+                amount: withdrawal.wkc_amount,
+                wallet: withdrawal.wallet,
+                txHash: result.txHash,
+                explorerLink: result.explorerLink
+            });
+        } else {
+            console.error('❌ Payment API returned failure but keeping withdrawal pending:', result.error);
+            
+            await sendWithdrawalFailureDM(withdrawal.user_id, withdrawal, `Payment processing delayed. Admin will retry shortly.`);
+            
+            return res.status(400).json({ 
+                success: false, 
+                error: result.error || 'Payment failed. Withdrawal remains pending for retry.' 
+            });
+        }
     } catch (error) {
-        console.error('❌ Failed to send withdrawal processing DM:', error);
+        console.error('❌ Error approving withdrawal:', error);
+        
+        try {
+            const { data: withdrawal } = await supabase
+                .from('withdrawals')
+                .select('*')
+                .eq('id', requestId)
+                .single();
+            
+            if (withdrawal) {
+                await sendWithdrawalFailureDM(withdrawal.user_id, withdrawal, `Payment processing delayed due to technical issue. Admin will retry shortly.`);
+            }
+        } catch (dmError) {
+            console.error('Failed to send error DM:', dmError);
+        }
+        
+        res.status(500).json({ 
+            success: false, 
+            error: `Technical error: ${error.message}. Withdrawal remains pending for retry.` 
+        });
     }
-}
+});
 
 // API endpoint to reject withdrawal
 app.post('/api/withdrawals/reject', async (req, res) => {
     try {
         const { requestId } = req.body;
         
-        const withdrawalDoc = await withdrawalsCollection.doc(requestId).get();
-        if (!withdrawalDoc.exists) {
+        const { data: withdrawal, error: withdrawalError } = await supabase
+            .from('withdrawals')
+            .select('*')
+            .eq('id', requestId)
+            .single();
+        
+        if (withdrawalError) throw withdrawalError;
+        if (!withdrawal) {
             return res.status(404).json({ success: false, error: 'Withdrawal request not found' });
         }
         
-        const request = withdrawalDoc.data();
-        
-        // Refund points
-        await updateUserBalance(request.userId, request.amount, {
+        await updateUserBalance(withdrawal.user_id, withdrawal.amount, {
             type: 'withdrawal_refund',
-            amount: request.amount,
+            amount: withdrawal.amount,
             description: 'Withdrawal refund - request rejected'
         });
         
-        // Update withdrawal status
-        await withdrawalsCollection.doc(requestId).update({
-            status: 'rejected',
-            rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
-            refundedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        await supabase
+            .from('withdrawals')
+            .update({
+                status: 'rejected',
+                rejected_at: new Date().toISOString(),
+                refunded_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', requestId);
         
         res.json({ 
             success: true, 
             message: 'Withdrawal rejected and points refunded',
-            refundedAmount: request.amount
+            refundedAmount: withdrawal.amount
         });
     } catch (error) {
         console.error('Error rejecting withdrawal:', error);
@@ -2554,14 +2540,14 @@ app.post('/api/withdrawals/reject', async (req, res) => {
 // API endpoint to get pending withdrawals
 app.get('/api/withdrawals/pending', async (req, res) => {
     try {
-        const snapshot = await withdrawalsCollection.where('status', '==', 'pending').get();
-        const withdrawals = [];
+        const { data: withdrawals, error } = await supabase
+            .from('withdrawals')
+            .select('*')
+            .eq('status', 'pending');
         
-        snapshot.forEach(doc => {
-            withdrawals.push(doc.data());
-        });
+        if (error) throw error;
         
-        res.json({ success: true, withdrawals: withdrawals });
+        res.json({ success: true, withdrawals: withdrawals || [] });
     } catch (error) {
         console.error('Error getting pending withdrawals:', error);
         res.status(500).json({ success: false, error: 'Failed to get pending withdrawals' });
@@ -2580,17 +2566,16 @@ app.post('/api/user/update-balance', async (req, res) => {
   }
   
   try {
-    const userRef = db.collection('users').doc(userId.toString());
-    const userDoc = await userRef.get();
+    const user = await getUser(userId.toString());
     
-    if (!userDoc.exists) {
+    if (!user) {
       return res.status(404).json({ 
         success: false, 
         error: 'User not found' 
       });
     }
     
-    const currentBalance = userDoc.data().balance || 0;
+    const currentBalance = user.balance || 0;
     let newBalance;
     
     if (type === 'add') {
@@ -2610,9 +2595,8 @@ app.post('/api/user/update-balance', async (req, res) => {
       });
     }
     
-    await userRef.update({
-      balance: newBalance,
-      last_activity: admin.firestore.FieldValue.serverTimestamp()
+    await saveUser(userId.toString(), {
+      balance: newBalance
     });
     
     res.json({
@@ -2629,7 +2613,7 @@ app.post('/api/user/update-balance', async (req, res) => {
   }
 });
 
-// Add this endpoint to your index.js
+// API endpoint to process start parameter
 app.post('/api/telegram/start', async (req, res) => {
   try {
     const { userId, startParam } = req.body;
@@ -2643,7 +2627,6 @@ app.post('/api/telegram/start', async (req, res) => {
       });
     }
     
-    // Parse referral from start parameter
     let referrerId = null;
     
     if (startParam.startsWith('ref')) {
@@ -2660,7 +2643,6 @@ app.post('/api/telegram/start', async (req, res) => {
       });
     }
     
-    // Prevent self-referral
     if (referrerId === userId.toString()) {
       console.log('❌ Self-referral detected');
       return res.json({ 
@@ -2669,22 +2651,16 @@ app.post('/api/telegram/start', async (req, res) => {
       });
     }
     
-    // Check if referral already processed
-    const userRef = db.collection('users').doc(userId.toString());
-    const userDoc = await userRef.get();
+    const user = await getUser(userId.toString());
     
-    if (userDoc.exists) {
-      const userData = userDoc.data();
-      if (userData.referredBy) {
-        console.log('❌ User already referred by someone');
-        return res.json({ 
-          success: true, 
-          message: 'Referral already processed' 
-        });
-      }
+    if (user && user.referred_by) {
+      console.log('❌ User already referred by someone');
+      return res.json({ 
+        success: true, 
+        message: 'Referral already processed' 
+      });
     }
     
-    // Process referral bonus
     console.log('🚀 Processing referral bonus...');
     const referralResponse = await fetch(`https://www.echoearn.work/api/user/process-referral`, {
       method: 'POST',
@@ -2700,11 +2676,10 @@ app.post('/api/telegram/start', async (req, res) => {
     const referralResult = await referralResponse.json();
     
     if (referralResult.success) {
-      // Mark user as referred
-      await userRef.set({
-        referredBy: referrerId,
-        referralProcessed: true
-      }, { merge: true });
+      await saveUser(userId.toString(), {
+        referred_by: referrerId,
+        referral_processed: true
+      });
       
       console.log('✅ Referral processed successfully');
       res.json({
@@ -2729,7 +2704,7 @@ app.post('/api/telegram/start', async (req, res) => {
   }
 });
 
-// Fix the referral processing endpoint - remove serverTimestamp from arrays
+// Fix the referral processing endpoint
 app.post('/api/user/process-referral', async (req, res) => {
   try {
     const { referrerId, referredUserId } = req.body;
@@ -2743,52 +2718,47 @@ app.post('/api/user/process-referral', async (req, res) => {
     
     console.log(`🎯 Processing referral: ${referrerId} referred ${referredUserId}`);
     
-    // Get referral configuration
-    const configDoc = await configCollection.doc('points').get();
-    const pointsConfig = configDoc.exists ? configDoc.data() : {};
+    const { data: config, error: configError } = await supabase
+      .from('configurations')
+      .select('config')
+      .eq('id', 'points')
+      .single();
+    
+    const pointsConfig = config ? config.config : {};
     const referralBonus = parseInt(pointsConfig.friendInvitePoints) || 20;
     
-    // Update referrer's balance and referral count
-    const referrerRef = db.collection('users').doc(referrerId.toString());
-    const referrerDoc = await referrerRef.get();
+    const referrer = await getUser(referrerId.toString());
     
-    if (!referrerDoc.exists) {
+    if (!referrer) {
       return res.status(404).json({ 
         success: false, 
         error: 'Referrer not found' 
       });
     }
     
-    // Add referral bonus
     await updateUserBalance(referrerId, referralBonus, {
       type: 'referral_bonus',
       amount: referralBonus,
       description: `Referral bonus for inviting user ${referredUserId}`,
       referredUserId: referredUserId,
-      timestamp: new Date().toISOString() // Use client timestamp
+      timestamp: new Date().toISOString()
     });
     
-    // Update referral count
-    const currentReferrals = referrerDoc.data().referral_count || 0;
-    await referrerRef.update({
+    const currentReferrals = referrer.referral_count || 0;
+    await saveUser(referrerId.toString(), {
       referral_count: currentReferrals + 1,
-      last_activity: admin.firestore.FieldValue.serverTimestamp()
-    });
-    
-    // Add to referral history (use regular timestamp, not serverTimestamp)
-    const referralEntry = {
-      referredUserId: referredUserId,
-      bonusAmount: referralBonus,
-      timestamp: new Date().toISOString() // Use regular timestamp for arrays
-    };
-    
-    await referrerRef.update({
-      referral_history: admin.firestore.FieldValue.arrayUnion(referralEntry)
+      referral_history: [
+        ...(referrer.referral_history || []),
+        {
+          referredUserId: referredUserId,
+          bonusAmount: referralBonus,
+          timestamp: new Date().toISOString()
+        }
+      ]
     });
     
     console.log(`✅ Referral processed: ${referrerId} earned ${referralBonus} points`);
     
-    // Send DM notification
     try {
       await bot.sendMessage(
         referrerId, 
@@ -2827,21 +2797,24 @@ app.get('/api/user/referral-stats', async (req, res) => {
   }
   
   try {
-    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    const user = await getUser(userId.toString());
     
-    if (!userDoc.exists) {
+    if (!user) {
       return res.status(404).json({ 
         success: false, 
         error: 'User not found' 
       });
     }
     
-    const userData = userDoc.data();
-    const totalInvites = userData.referral_count || 0;
+    const totalInvites = user.referral_count || 0;
     
-    // Get referral bonus amount from config
-    const configDoc = await configCollection.doc('points').get();
-    const pointsConfig = configDoc.exists ? configDoc.data() : {};
+    const { data: config, error: configError } = await supabase
+      .from('configurations')
+      .select('config')
+      .eq('id', 'points')
+      .single();
+    
+    const pointsConfig = config ? config.config : {};
     const bonusPerFriend = parseInt(pointsConfig.friendInvitePoints) || 20;
     
     const totalEarnings = totalInvites * bonusPerFriend;
@@ -2852,7 +2825,7 @@ app.get('/api/user/referral-stats', async (req, res) => {
         totalInvites: totalInvites,
         totalEarnings: totalEarnings,
         bonusPerFriend: bonusPerFriend,
-        referralHistory: userData.referral_history || []
+        referralHistory: user.referral_history || []
       }
     });
   } catch (error) {
@@ -2864,7 +2837,7 @@ app.get('/api/user/referral-stats', async (req, res) => {
   }
 });
 
-// Team members endpoint (for future multi-level referrals)
+// Team members endpoint
 app.get('/api/user/team-members', async (req, res) => {
   const { userId } = req.query;
   
@@ -2876,33 +2849,28 @@ app.get('/api/user/team-members', async (req, res) => {
   }
   
   try {
-    // For now, return direct referrals only
-    // In future, you can implement multi-level team structure
-    const userDoc = await db.collection('users').doc(userId.toString()).get();
+    const user = await getUser(userId.toString());
     
-    if (!userDoc.exists) {
+    if (!user) {
       return res.status(404).json({ 
         success: false, 
         error: 'User not found' 
       });
     }
     
-    const userData = userDoc.data();
-    const referralHistory = userData.referral_history || [];
+    const referralHistory = user.referral_history || [];
     
-    // Get details for each referred user
     const teamMembers = await Promise.all(
       referralHistory.map(async (referral) => {
         try {
-          const referredUserDoc = await db.collection('users').doc(referral.referredUserId.toString()).get();
-          if (referredUserDoc.exists) {
-            const referredUser = referredUserDoc.data();
+          const referredUser = await getUser(referral.referredUserId.toString());
+          if (referredUser) {
             return {
               userId: referral.referredUserId,
               username: referredUser.username || referredUser.first_name,
               joinDate: referredUser.join_date,
               bonusEarned: referral.bonusAmount,
-              level: 1 // Direct referral
+              level: 1
             };
           }
         } catch (error) {
@@ -2939,7 +2907,6 @@ app.post('/api/process-withdrawal', async (req, res) => {
       });
     }
     
-    // Validate BSC address format
     if (!address.startsWith('0x') || address.length !== 42) {
       return res.status(400).json({ 
         success: false, 
@@ -2947,7 +2914,6 @@ app.post('/api/process-withdrawal', async (req, res) => {
       });
     }
     
-    // Send request to payment API
     const paymentData = {
       address: address,
       amount: amount.toString(),
@@ -3024,24 +2990,6 @@ app.post('/api/bot/send-message', async (req, res) => {
       success: false,
       message: 'Failed to send message',
       error: error.message
-    });
-  }
-});
-
-// API endpoint to get withdrawal requests (for admin)
-app.get('/api/withdrawals/pending', async (req, res) => {
-  try {
-    // In a real app, you'd get this from your database
-    // For now, we'll return a mock response
-    res.json({
-      success: true,
-      withdrawals: []
-    });
-  } catch (error) {
-    console.error('Error getting withdrawals:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get withdrawals'
     });
   }
 });
