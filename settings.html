@@ -3046,8 +3046,10 @@ async function loadWithdrawalRequests() {
                             <h4 class="font-bold text-yellow-400">${request.username}</h4>
                             <span class="text-xs px-2 py-1 rounded-full bg-yellow-500 text-black">ID: ${request.userId}</span>
                             </div>
-                            <p class="text-sm text-gray-300">Amount: ${request.amount || 0} points (${(request.wkcAmount || 0).toFixed(2)} WKC)</p>                            <p class="text-sm text-gray-300">Wallet: ${request.wallet}</p>
-                            <p class="text-sm text-gray-300">Requested: ${request.createdAt ? new Date(request.createdAt).toLocaleString() : 'Unknown date'}</p>                        </div>
+                            <p class="text-sm text-gray-300">Amount: ${request.amount} points (${request.wkcAmount} WKC)</p>
+                            <p class="text-sm text-gray-300">Wallet: ${request.wallet}</p>
+                            <p class="text-sm text-gray-300">Requested: ${new Date(request.createdAt).toLocaleString()}</p>
+                        </div>
                         <div class="flex gap-2 ml-4">
                             <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-green-500 text-white shadow hover:bg-green-600 h-8 px-3" onclick="approveWithdrawal('${request.id}')">
                             ✅ Approve & Pay
