@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..')));
 
 // Bot configuration
-const botToken = '8488159096:AAHnzzdhE2wrIKCS5OtR2o3K_1Cw3PL38kg';
+const botToken = '8475476581:AAEyqjagblvij7l0V_Oikz2S5ynJgxjmKLw';
 const adminId = '5650788149';
 const bot = new TelegramBot(botToken);
 
