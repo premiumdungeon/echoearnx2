@@ -1113,6 +1113,7 @@ app.get('/api/withdrawals/user-pending', async (req, res) => {
 });
 
 // API endpoint to create withdrawal request
+// API endpoint to create withdrawal request - FIXED VERSION
 app.post('/api/withdrawals/create', async (req, res) => {
   try {
     const withdrawalRequest = req.body;
@@ -1121,32 +1122,35 @@ app.post('/api/withdrawals/create', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
     
+    // Generate proper ID if not provided
+    const requestId = withdrawalRequest.id || `wd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Calculate WKC amount properly
+    const wkcAmount = parseFloat(withdrawalRequest.wkcAmount) || (withdrawalRequest.amount * 0.001);
+    
     const { error } = await supabase
       .from('withdrawals')
       .insert([{
-        id: withdrawalRequest.id,
-        user_id: withdrawalRequest.userId,
-        username: withdrawalRequest.username,
-        amount: withdrawalRequest.amount,
-        wkc_amount: withdrawalRequest.wkcAmount,
-        wallet: withdrawalRequest.wallet,
+        id: requestId,
+        user_id: withdrawalRequest.userId.toString(),
+        username: withdrawalRequest.username || 'Unknown',
+        amount: parseInt(withdrawalRequest.amount),
+        wkc_amount: wkcAmount,
+        wallet_address: withdrawalRequest.wallet,
         status: 'pending',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        original_balance: withdrawalRequest.originalBalance || 0
       }]);
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating withdrawal:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
     
-    await sendWithdrawalRequestDM(withdrawalRequest.userId, withdrawalRequest.amount, withdrawalRequest.wkcAmount);
-    
-    res.json({ 
-      success: true, 
-      message: 'Withdrawal request created successfully',
-      requestId: withdrawalRequest.id
-    });
+    res.json({ success: true, id: requestId });
   } catch (error) {
-    console.error('Error creating withdrawal request:', error);
-    res.status(500).json({ success: false, error: 'Failed to create withdrawal request' });
+    console.error('Error in withdrawal creation:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -2538,20 +2542,38 @@ app.post('/api/withdrawals/reject', async (req, res) => {
 });
 
 // API endpoint to get pending withdrawals
+// API endpoint to get pending withdrawals - FIXED VERSION
 app.get('/api/withdrawals/pending', async (req, res) => {
-    try {
-        const { data: withdrawals, error } = await supabase
-            .from('withdrawals')
-            .select('*')
-            .eq('status', 'pending');
-        
-        if (error) throw error;
-        
-        res.json({ success: true, withdrawals: withdrawals || [] });
-    } catch (error) {
-        console.error('Error getting pending withdrawals:', error);
-        res.status(500).json({ success: false, error: 'Failed to get pending withdrawals' });
+  try {
+    const { data, error } = await supabase
+      .from('withdrawals')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching withdrawals:', error);
+      return res.status(500).json({ success: false, error: error.message });
     }
+    
+    // Transform data to match frontend expectations
+    const withdrawals = data.map(item => ({
+      id: item.id,
+      userId: item.user_id,
+      username: item.username,
+      amount: item.amount,
+      wkcAmount: item.wkc_amount,
+      wallet: item.wallet_address,
+      status: item.status,
+      createdAt: item.created_at,
+      originalBalance: item.original_balance
+    }));
+    
+    res.json({ success: true, withdrawals });
+  } catch (error) {
+    console.error('Error fetching withdrawals:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // API endpoint to update user balance
