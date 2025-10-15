@@ -156,7 +156,7 @@ function getBotUsername() {
       console.error('Error parsing user data:', error);
     }
   }
-  return 'EchoEARN_robot'; // Default bot username
+  return 'echoearn_babot'; // Default bot username
 }
 
 // Get referral code for the current user
