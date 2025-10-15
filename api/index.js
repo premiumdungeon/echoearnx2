@@ -337,102 +337,78 @@ bot.on('message', async (msg) => {
     }
 
     // Handle /start command with referral parameter
-    if (text.startsWith('/start')) {
-      const startParam = text.split(' ')[1];
-      
-      let welcomeMessage = `👋 Welcome to EchoEARN Bot!\n\n`;
-      welcomeMessage += `🎯 <b>Earn points by completing simple tasks</b>\n`;
-      welcomeMessage += `💰 <b>Withdraw your earnings easily</b>\n\n`;
-      
-      if (startParam) {
-        console.log(`🔗 Start parameter detected: ${startParam}`);
-        
-        let referrerId = null;
-        
-        if (startParam) {
-  console.log(`🔗 Start parameter detected: ${startParam}`);
+    // Handle /start command with referral parameter
+if (text.startsWith('/start')) {
+  const startParam = text.split(' ')[1];
   
-  let referrerId = null;
+  let welcomeMessage = `👋 Welcome to EchoEARN Bot!\n\n`;
+  welcomeMessage += `🎯 <b>Earn points by completing simple tasks</b>\n`;
+  welcomeMessage += `💰 <b>Withdraw your earnings easily</b>\n\n`;
   
-  if (startParam.startsWith('ref')) {
-    referrerId = startParam.replace('ref', '');
-  } else if (startParam.match(/^\d+$/)) {
-    referrerId = startParam;
-  }
-  
-  if (referrerId && referrerId !== userId.toString()) {
-    console.log(`🎯 Processing referral: ${referrerId} -> ${userId}`);
+  if (startParam) {
+    console.log(`🔗 Start parameter detected: ${startParam}`);
     
-    const user = await getUser(userId.toString());
+    let referrerId = null;
     
-    // ✅ STRONG VALIDATION: Check if user already has a referrer
-    if (user && user.referred_by) {
-      console.log(`❌ Referral blocked: User ${userId} already referred by ${user.referred_by}`);
-    } 
-    // ✅ Check if referral already processed
-    else if (user && user.referral_processed) {
-      console.log(`❌ Referral blocked: Already processed for user ${userId}`);
+    if (startParam.startsWith('ref')) {
+      referrerId = startParam.replace('ref', '');
+    } else if (startParam.match(/^\d+$/)) {
+      referrerId = startParam;
     }
-    // ✅ Check if user is trying to refer themselves
-    else if (referrerId === userId.toString()) {
-      console.log(`❌ Self-referral blocked: ${userId}`);
-    }
-    // ✅ Process new referral
-    else {
-      const referralSuccess = await processReferralInBot(referrerId, userId.toString());
+    
+    if (referrerId && referrerId !== userId.toString()) {
+      console.log(`🎯 Processing referral: ${referrerId} -> ${userId}`);
       
-      if (referralSuccess) {
-        welcomeMessage += `🎉 <b>You joined via referral! Your friend earned bonus points.</b>\n\n`;
-        
-        await saveUser(userId.toString(), {
-          referred_by: referrerId,
-          referral_processed: true,
-          referral_processed_at: new Date().toISOString(),
-          joined_via: 'referral'
-        });
-        
-        console.log(`✅ New referral processed: ${referrerId} -> ${userId}`);
+      const user = await getUser(userId.toString());
+      
+      // ✅ STRONG VALIDATION: Check if user already has a referrer
+      if (user && user.referred_by) {
+        console.log(`❌ Referral blocked: User ${userId} already referred by ${user.referred_by}`);
+      } 
+      // ✅ Check if referral already processed
+      else if (user && user.referral_processed) {
+        console.log(`❌ Referral blocked: Already processed for user ${userId}`);
       }
-    }
-  }
-}
-      
-      welcomeMessage += `📱 <b>Click the button below to start earning!</b>`;
-      
-      const keyboard = {
-        inline_keyboard: [[
-          {
-            text: '🚀 Start Earning',
-            web_app: { url: 'https://www.echoearn.work/' }
-          }
-        ]]
-      };
-      
-      await bot.sendMessage(chatId, welcomeMessage, {
-        parse_mode: 'HTML',
-        reply_markup: keyboard
-      });
-    }
-
-    if (msg.web_app_data) {
-      try {
-        const data = JSON.parse(msg.web_app_data.data);
+      // ✅ Check if user is trying to refer themselves
+      else if (referrerId === userId.toString()) {
+        console.log(`❌ Self-referral blocked: ${userId}`);
+      }
+      // ✅ Process new referral
+      else {
+        const referralSuccess = await processReferralInBot(referrerId, userId.toString());
         
-        if (data.action === 'channels_joined' && data.userId) {
-          const userInfo = `User ${data.userId} has joined all channels`;
-          console.log(userInfo);
+        if (referralSuccess) {
+          welcomeMessage += `🎉 <b>You joined via referral! Your friend earned bonus points.</b>\n\n`;
           
-          await bot.sendMessage(adminId, userInfo);
-          await bot.sendMessage(chatId, 'Thank you for joining our channels! 🎉');
+          await saveUser(userId.toString(), {
+            referred_by: referrerId,
+            referral_processed: true,
+            referral_processed_at: new Date().toISOString(),
+            joined_via: 'referral'
+          });
+          
+          console.log(`✅ New referral processed: ${referrerId} -> ${userId}`);
         }
-      } catch (error) {
-        console.error('Error processing web app data:', error);
       }
     }
-  } catch (error) {
-    console.error('Error handling message:', error);
   }
-});
+  
+  welcomeMessage += `📱 <b>Click the button below to start earning!</b>`;
+  
+  const keyboard = {
+    inline_keyboard: [[
+      {
+        text: '🚀 Start Earning',
+        web_app: { url: 'https://www.echoearn.work/' }
+      }
+    ]]
+  };
+  
+  await bot.sendMessage(chatId, welcomeMessage, {
+    parse_mode: 'HTML',
+    reply_markup: keyboard
+  });
+}
 
 // Process referral function
 async function processReferralInBot(referrerId, referredUserId) {
