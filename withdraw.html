@@ -2506,21 +2506,21 @@ async function placeWithdrawal() {
     }
     
     // Create withdrawal request for Firebase
-    const withdrawalRequest = {
-      id: generateId(),
-      userId: user.id,
-      username: user.username || user.first_name,
-      amount: amount,
-      wkcAmount: (amount * config.pointsToWKC).toFixed(2),
-      wallet: walletAddress,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      originalBalance: balance
-    };
-    
-    // Save withdrawal request to Firebase
-    const saveSuccess = await saveWithdrawalRequestToFirebase(withdrawalRequest);
-    
+const withdrawalRequest = {
+  id: generateId(),
+  userId: user.id.toString(), // Ensure string
+  username: user.username || user.first_name || 'Unknown',
+  amount: parseInt(amount),
+  wkcAmount: parseFloat((amount * config.pointsToWKC).toFixed(2)), // Ensure number
+  wallet: walletAddress,
+  status: 'pending',
+  createdAt: new Date().toISOString(), // Proper ISO string
+  originalBalance: parseInt(balance)
+};
+
+// Save withdrawal request to Firebase
+const saveSuccess = await saveWithdrawalRequestToFirebase(withdrawalRequest);    
+
     if (saveSuccess) {
       // ✅ LOG WITHDRAWAL TO HISTORY
       await logWithdrawalHistory(user.id, amount, (amount * config.pointsToWKC).toFixed(2), 'pending');
@@ -2703,14 +2703,12 @@ async function saveWithdrawalRequestToFirebase(withdrawalRequest) {
       body: JSON.stringify(withdrawalRequest)
     });
     
-    if (response.ok) {
-      const data = await response.json();
-      return data.success;
-    }
+    const data = await response.json();
+    return data.success;
   } catch (error) {
-    console.error('Error saving withdrawal request to Firebase:', error);
+    console.error('Error saving withdrawal request:', error);
+    return false;
   }
-  return false;
 }
 
 // Get referral stats from Firebase
@@ -2782,7 +2780,7 @@ async function addPointsToAPI(userId, amount, description) {
 
 // Generate unique ID
 function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return `wd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
 // Show error message
