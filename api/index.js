@@ -2751,6 +2751,7 @@ app.post('/api/telegram/start', async (req, res) => {
 });
 
 // Fix the referral processing endpoint
+// Fix the referral processing endpoint
 app.post('/api/user/process-referral', async (req, res) => {
   try {
     const { referrerId, referredUserId } = req.body;
@@ -2798,7 +2799,7 @@ app.post('/api/user/process-referral', async (req, res) => {
         success: false, 
         error: 'This user was already referred by you' 
       });
-    }    
+    }
     
     const { data: config, error: configError } = await supabase
       .from('configurations')
@@ -2809,15 +2810,7 @@ app.post('/api/user/process-referral', async (req, res) => {
     const pointsConfig = config ? config.config : {};
     const referralBonus = parseInt(pointsConfig.friendInvitePoints) || 20;
     
-    const referrer = await getUser(referrerId.toString());
-    
-    if (!referrer) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Referrer not found' 
-      });
-    }
-    
+    // ✅ ADD REFERRAL BONUS
     await updateUserBalance(referrerId, referralBonus, {
       type: 'referral_bonus',
       amount: referralBonus,
@@ -2826,11 +2819,12 @@ app.post('/api/user/process-referral', async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
+    // ✅ UPDATE REFERRAL COUNT
     const currentReferrals = referrer.referral_count || 0;
     await saveUser(referrerId.toString(), {
       referral_count: currentReferrals + 1,
       referral_history: [
-        ...(referrer.referral_history || []),
+        ...referralHistory,
         {
           referredUserId: referredUserId,
           bonusAmount: referralBonus,
