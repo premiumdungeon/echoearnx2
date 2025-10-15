@@ -337,78 +337,97 @@ bot.on('message', async (msg) => {
     }
 
     // Handle /start command with referral parameter
-    // Handle /start command with referral parameter
-if (text.startsWith('/start')) {
-  const startParam = text.split(' ')[1];
-  
-  let welcomeMessage = `👋 Welcome to EchoEARN Bot!\n\n`;
-  welcomeMessage += `🎯 <b>Earn points by completing simple tasks</b>\n`;
-  welcomeMessage += `💰 <b>Withdraw your earnings easily</b>\n\n`;
-  
-  if (startParam) {
-    console.log(`🔗 Start parameter detected: ${startParam}`);
-    
-    let referrerId = null;
-    
-    if (startParam.startsWith('ref')) {
-      referrerId = startParam.replace('ref', '');
-    } else if (startParam.match(/^\d+$/)) {
-      referrerId = startParam;
-    }
-    
-    if (referrerId && referrerId !== userId.toString()) {
-      console.log(`🎯 Processing referral: ${referrerId} -> ${userId}`);
+    if (text.startsWith('/start')) {
+      const startParam = text.split(' ')[1];
       
-      const user = await getUser(userId.toString());
+      let welcomeMessage = `👋 Welcome to EchoEARN Bot!\n\n`;
+      welcomeMessage += `🎯 <b>Earn points by completing simple tasks</b>\n`;
+      welcomeMessage += `💰 <b>Withdraw your earnings easily</b>\n\n`;
       
-      // ✅ STRONG VALIDATION: Check if user already has a referrer
-      if (user && user.referred_by) {
-        console.log(`❌ Referral blocked: User ${userId} already referred by ${user.referred_by}`);
-      } 
-      // ✅ Check if referral already processed
-      else if (user && user.referral_processed) {
-        console.log(`❌ Referral blocked: Already processed for user ${userId}`);
-      }
-      // ✅ Check if user is trying to refer themselves
-      else if (referrerId === userId.toString()) {
-        console.log(`❌ Self-referral blocked: ${userId}`);
-      }
-      // ✅ Process new referral
-      else {
-        const referralSuccess = await processReferralInBot(referrerId, userId.toString());
+      if (startParam) {
+        console.log(`🔗 Start parameter detected: ${startParam}`);
         
-        if (referralSuccess) {
-          welcomeMessage += `🎉 <b>You joined via referral! Your friend earned bonus points.</b>\n\n`;
+        let referrerId = null;
+        
+        if (startParam.startsWith('ref')) {
+          referrerId = startParam.replace('ref', '');
+        } else if (startParam.match(/^\d+$/)) {
+          referrerId = startParam;
+        }
+        
+        if (referrerId && referrerId !== userId.toString()) {
+          console.log(`🎯 Processing referral: ${referrerId} -> ${userId}`);
           
-          await saveUser(userId.toString(), {
-            referred_by: referrerId,
-            referral_processed: true,
-            referral_processed_at: new Date().toISOString(),
-            joined_via: 'referral'
-          });
+          const user = await getUser(userId.toString());
           
-          console.log(`✅ New referral processed: ${referrerId} -> ${userId}`);
+          // ✅ STRONG VALIDATION: Check if user already has a referrer
+          if (user && user.referred_by) {
+            console.log(`❌ Referral blocked: User ${userId} already referred by ${user.referred_by}`);
+          } 
+          // ✅ Check if referral already processed
+          else if (user && user.referral_processed) {
+            console.log(`❌ Referral blocked: Already processed for user ${userId}`);
+          }
+          // ✅ Check if user is trying to refer themselves
+          else if (referrerId === userId.toString()) {
+            console.log(`❌ Self-referral blocked: ${userId}`);
+          }
+          // ✅ Process new referral
+          else {
+            const referralSuccess = await processReferralInBot(referrerId, userId.toString());
+            
+            if (referralSuccess) {
+              welcomeMessage += `🎉 <b>You joined via referral! Your friend earned bonus points.</b>\n\n`;
+              
+              await saveUser(userId.toString(), {
+                referred_by: referrerId,
+                referral_processed: true,
+                referral_processed_at: new Date().toISOString(),
+                joined_via: 'referral'
+              });
+              
+              console.log(`✅ New referral processed: ${referrerId} -> ${userId}`);
+            }
+          }
         }
       }
+      
+      welcomeMessage += `📱 <b>Click the button below to start earning!</b>`;
+      
+      const keyboard = {
+        inline_keyboard: [[
+          {
+            text: '🚀 Start Earning',
+            web_app: { url: 'https://www.echoearn.work/' }
+          }
+        ]]
+      };
+      
+      await bot.sendMessage(chatId, welcomeMessage, {
+        parse_mode: 'HTML',
+        reply_markup: keyboard
+      });
     }
-  }
-  
-  welcomeMessage += `📱 <b>Click the button below to start earning!</b>`;
-  
-  const keyboard = {
-    inline_keyboard: [[
-      {
-        text: '🚀 Start Earning',
-        web_app: { url: 'https://www.echoearn.work/' }
+
+    if (msg.web_app_data) {
+      try {
+        const data = JSON.parse(msg.web_app_data.data);
+        
+        if (data.action === 'channels_joined' && data.userId) {
+          const userInfo = `User ${data.userId} has joined all channels`;
+          console.log(userInfo);
+          
+          await bot.sendMessage(adminId, userInfo);
+          await bot.sendMessage(chatId, 'Thank you for joining our channels! 🎉');
+        }
+      } catch (error) {
+        console.error('Error processing web app data:', error);
       }
-    ]]
-  };
-  
-  await bot.sendMessage(chatId, welcomeMessage, {
-    parse_mode: 'HTML',
-    reply_markup: keyboard
-  });
-}
+    }
+  } catch (error) {
+    console.error('Error handling message:', error);
+  }
+});
 
 // Process referral function
 async function processReferralInBot(referrerId, referredUserId) {
@@ -2726,7 +2745,6 @@ app.post('/api/telegram/start', async (req, res) => {
   }
 });
 
-// Fix the referral processing endpoint
 // Fix the referral processing endpoint
 app.post('/api/user/process-referral', async (req, res) => {
   try {
